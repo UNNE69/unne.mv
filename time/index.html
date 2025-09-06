@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Time</title>
+<title>Time Clock — Maldives</title>
 <link rel="stylesheet" href="../assets/css/time.css">
 </head>
 <body>
@@ -75,6 +75,7 @@
 (() => {
   const DEFAULTS = {
     tz: 'Indian/Maldives',
+    tzLabel: 'Maldives (GMT +5 / UTC +5)',
     size: 120,
     format: '24',
     font: 'system-ui',
@@ -112,7 +113,7 @@
     fontColorInput.value = settings.fontColor;
     bgColorInput.value = settings.bgColor;
 
-    tzSelect.textContent = settings.tzLabel || 'Maldives (GMT +5 / UTC +5)';
+    tzSelect.textContent = settings.tzLabel;
     formatSelect.textContent = settings.format==='12'?'12-hour':'24-hour';
     fontSelect.textContent = settings.font;
   }
@@ -136,10 +137,14 @@
   }
   updateClock();
 
+  // Custom select
   function makeCustomSelect(selectEl, optionsEl, setFunc){
-    selectEl.addEventListener('click', ()=>{
+    selectEl.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      document.querySelectorAll('.custom-options').forEach(o=>{
+        if(o!==optionsEl) o.classList.remove('open');
+      });
       optionsEl.classList.toggle('open');
-      setTimeout(()=>{ optionsEl.classList.remove('open'); }, 5000);
     });
     optionsEl.querySelectorAll('li').forEach(li=>{
       li.addEventListener('click', ()=>{
@@ -151,7 +156,14 @@
     });
   }
 
-  // Full IANA timezone list with GMT/UTC labels
+  // Close dropdown if clicked outside
+  document.addEventListener('click', ()=>{
+    document.querySelectorAll('.custom-options').forEach(o=>{
+      o.classList.remove('open');
+    });
+  });
+
+  // Timezones
   const TIMEZONES = [
     {tz:'Pacific/Midway',label:'Midway Island (GMT -11 / UTC -11)'},
     {tz:'America/Adak',label:'Adak (GMT -10 / UTC -10)'},
@@ -181,7 +193,6 @@
     {tz:'Australia/Sydney',label:'Sydney (GMT +10 / UTC +10)'},
     {tz:'Pacific/Auckland',label:'Auckland (GMT +12 / UTC +12)'}
   ];
-
   TIMEZONES.forEach(t=>{
     const li = document.createElement('li');
     li.dataset.value = t.tz;
@@ -190,20 +201,10 @@
   });
 
   makeCustomSelect(tzSelect,tzOptions,(val,label)=>{
-    settings.tz = val;
-    settings.tzLabel = label;
-    applySettings(); saveSettings();
+    settings.tz = val; settings.tzLabel = label; applySettings(); saveSettings();
   });
-
-  makeCustomSelect(formatSelect,formatOptions,(val,label)=>{
-    settings.format = val;
-    applySettings(); saveSettings();
-  });
-
-  makeCustomSelect(fontSelect,fontOptions,(val,label)=>{
-    settings.font = val;
-    applySettings(); saveSettings();
-  });
+  makeCustomSelect(formatSelect,formatOptions,(val,label)=>{ settings.format=val; applySettings(); saveSettings(); });
+  makeCustomSelect(fontSelect,fontOptions,(val,label)=>{ settings.font=val; applySettings(); saveSettings(); });
 
   sizeInput.addEventListener('input',()=>{ settings.size=Math.min(Math.max(parseInt(sizeInput.value)||120,20),800); applySettings(); saveSettings(); });
   fontColorInput.addEventListener('input',()=>{ settings.fontColor=fontColorInput.value; applySettings(); saveSettings(); });
@@ -216,36 +217,33 @@
   fullscreenBtn.addEventListener('click',toggleFullscreen);
   document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f') toggleFullscreen();});
 
-  resetBtn.addEventListener('click',()=>{
-    settings=Object.assign({},DEFAULTS); applySettings(); saveSettings();
-  });
+  resetBtn.addEventListener('click',()=>{ settings=Object.assign({},DEFAULTS); applySettings(); saveSettings(); });
 
-  // --- Gear & auto-hide menu ---
+  // Gear & auto-hide menu
   let gearTimeout;
   function showControls() {
-    controls.classList.remove('hidden');  // show menu
-    gear.classList.add('hidden');         // hide gear while menu is open
+    controls.classList.remove('hidden');
+    gear.classList.add('hidden');
     clearTimeout(gearTimeout);
-    gearTimeout = setTimeout(()=>{
-      controls.classList.add('hidden');   // hide menu
-      gear.classList.remove('hidden');    // show gear again
+    gearTimeout=setTimeout(()=>{
+      controls.classList.add('hidden');
+      gear.classList.remove('hidden');
     },5000);
   }
-  gear.addEventListener('click', showControls);
+  gear.addEventListener('click',showControls);
 
   function scheduleGearHide(){
     clearTimeout(gearTimeout);
-    gearTimeout = setTimeout(()=>{
+    gearTimeout=setTimeout(()=>{
       if(controls.classList.contains('hidden')){
         gear.classList.add('hidden');
       }
     },5000);
   }
 
-  document.addEventListener('mousemove', (e)=>{
-    if(e.clientX > window.innerWidth - 60 && e.clientY < 60){
-      gear.classList.remove('hidden');
-      scheduleGearHide();
+  document.addEventListener('mousemove',(e)=>{
+    if(e.clientX>window.innerWidth-60 && e.clientY<60){
+      gear.classList.remove('hidden'); scheduleGearHide();
     }
   });
 
