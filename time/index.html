@@ -4,91 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Time Clock — Maldives Default</title>
-  <style>
-    :root { 
-      --clock-size: 120px; 
-      --font-family: system-ui; 
-      --font-color: #ffffff; 
-      --bg-color: #000000;
-    }
+  <link rel="stylesheet" href="../assets/css/time.css">
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg-color);
-      color: var(--font-color);
-      font-family: var(--font-family), sans-serif;
-    }
-
-    .wrap {
-      height: 100%;
-      display: grid;
-      place-items: center;
-      text-align: center;
-    }
-
-    #clock {
-      font-size: var(--clock-size);
-      line-height: 1.1;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      user-select: none;
-      color: var(--font-color);
-    }
-
-    .controls, .gear {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      background: rgba(0,0,0,0.75);
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 14px;
-      padding: 10px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      font-size: 14px;
-      opacity: 1;
-      transition: opacity 0.8s ease;
-    }
-    .controls.hidden, .gear.hidden { opacity: 0; pointer-events: none; }
-
-    .controls label { opacity: 0.9; }
-    .controls input,
-    .controls select,
-    .controls button {
-      background: #111;
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.35);
-      border-radius: 8px;
-      padding: 6px 8px;
-      outline: none;
-      cursor: pointer;
-    }
-    .controls select option { background: #111; color: #fff; }
-    .controls input[type="color"] {
-      padding: 0; border: none; background: none; width: 40px; height: 28px; cursor: pointer;
-    }
-    .controls button:hover,
-    .controls select:hover,
-    .controls input:hover {
-      border-color: rgba(255,255,255,0.65);
-    }
-
-    .gear {
-      width: 40px;
-      height: 40px;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 20px;
-    }
-
-    @media (max-width: 600px) {
-      #clock { font-size: min(var(--clock-size), 18vw); }
-    }
-  </style>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Poppins:wght@400;600&family=Orbitron:wght@500&family=Raleway:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="wrap">
@@ -101,14 +20,30 @@
 
     <label for="tz">Time</label>
     <select id="tz">
-      <option value="Indian/Maldives">Maldives (Default)</option>
-      <option value="local">Your device</option>
-      <option value="Asia/Kolkata">India (IST)</option>
-      <option value="Asia/Dubai">UAE</option>
-      <option value="Europe/London">London</option>
-      <option value="Asia/Singapore">Singapore</option>
-      <option value="Australia/Sydney">Sydney</option>
-      <option value="America/New_York">New York</option>
+      <!-- Named Zones -->
+      <optgroup label="By Country/City">
+        <option value="Indian/Maldives">Maldives (Default)</option>
+        <option value="local">Your Device</option>
+        <option value="Asia/Kolkata">India (IST)</option>
+        <option value="Asia/Dubai">UAE</option>
+        <option value="Europe/London">London</option>
+        <option value="Asia/Singapore">Singapore</option>
+        <option value="Australia/Sydney">Sydney</option>
+        <option value="America/New_York">New York</option>
+      </optgroup>
+      <!-- GMT Offsets -->
+      <optgroup label="By GMT Offset">
+        <option value="Etc/GMT-12">GMT+12</option>
+        <option value="Etc/GMT-8">GMT+8</option>
+        <option value="Etc/GMT-5">GMT+5</option>
+        <option value="Etc/GMT-4">GMT+4</option>
+        <option value="Etc/GMT-3">GMT+3</option>
+        <option value="Etc/GMT">GMT+0</option>
+        <option value="Etc/GMT+3">GMT-3</option>
+        <option value="Etc/GMT+5">GMT-5</option>
+        <option value="Etc/GMT+8">GMT-8</option>
+        <option value="Etc/GMT+12">GMT-12</option>
+      </optgroup>
     </select>
 
     <select id="format">
@@ -125,6 +60,12 @@
       <option value="Times New Roman">Times</option>
       <option value="Verdana">Verdana</option>
       <option value="monospace">Monospace</option>
+      <!-- Google Fonts -->
+      <option value="Roboto Mono">Roboto Mono</option>
+      <option value="Poppins">Poppins</option>
+      <option value="Orbitron">Orbitron</option>
+      <option value="Raleway">Raleway</option>
+      <option value="Fira Code">Fira Code</option>
     </select>
 
     <label for="fontColor">Font Color</label>
@@ -139,172 +80,6 @@
 
   <div class="gear hidden" id="gear">⚙️</div>
 
-  <script>
-    const DEFAULTS = {
-      tz: 'Indian/Maldives',
-      size: 120,
-      format: '24',
-      font: 'system-ui',
-      fontColor: '#ffffff',
-      bgColor: '#000000'
-    };
-
-    const clockEl = document.getElementById('clock');
-    const sizeInput = document.getElementById('size');
-    const tzSelect = document.getElementById('tz');
-    const fmtSelect = document.getElementById('format');
-    const fontSelect = document.getElementById('font');
-    const fontColorInput = document.getElementById('fontColor');
-    const bgColorInput = document.getElementById('bgColor');
-    const resetBtn = document.getElementById('reset');
-    const fullscreenBtn = document.getElementById('fullscreen');
-    const controls = document.getElementById('controls');
-    const gear = document.getElementById('gear');
-
-    let currentTZ, format;
-    let hideTimeout, gearTimeout;
-
-    // Load from localStorage or defaults
-    function loadSettings() {
-      const s = JSON.parse(localStorage.getItem('clockSettings')) || DEFAULTS;
-      currentTZ = s.tz;
-      format = s.format;
-      document.documentElement.style.setProperty('--clock-size', s.size + 'px');
-      document.documentElement.style.setProperty('--font-family', s.font);
-      document.documentElement.style.setProperty('--font-color', s.fontColor);
-      document.documentElement.style.setProperty('--bg-color', s.bgColor);
-      sizeInput.value = s.size;
-      tzSelect.value = s.tz;
-      fmtSelect.value = s.format;
-      fontSelect.value = s.font;
-      fontColorInput.value = s.fontColor;
-      bgColorInput.value = s.bgColor;
-    }
-    loadSettings();
-
-    function saveSettings() {
-      const s = {
-        tz: currentTZ,
-        size: Number(sizeInput.value),
-        format,
-        font: fontSelect.value,
-        fontColor: fontColorInput.value,
-        bgColor: bgColorInput.value
-      };
-      localStorage.setItem('clockSettings', JSON.stringify(s));
-    }
-
-    function getTimeString(date, tz) {
-      const hour12 = (format === '12');
-      const parts = new Intl.DateTimeFormat([], {
-        timeZone: tz === 'local' ? undefined : tz,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12
-      }).formatToParts(date);
-
-      let h = parts.find(p => p.type === 'hour')?.value ?? '00';
-      let m = parts.find(p => p.type === 'minute')?.value ?? '00';
-      let s = parts.find(p => p.type === 'second')?.value ?? '00';
-      let dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value;
-      let text = `${h}:${m}:${s}`;
-      if (hour12 && dayPeriod) text += ` ${dayPeriod.toUpperCase()}`;
-      return text;
-    }
-
-    function tick() {
-      const now = new Date();
-      clockEl.textContent = getTimeString(now, currentTZ);
-      requestAnimationFrame(tick);
-    }
-    tick();
-
-    // Inputs
-    sizeInput.addEventListener('input', () => {
-      const v = Math.max(20, Number(sizeInput.value) || DEFAULTS.size);
-      document.documentElement.style.setProperty('--clock-size', v + 'px');
-      saveSettings();
-    });
-    tzSelect.addEventListener('change', () => { currentTZ = tzSelect.value; saveSettings(); });
-    fmtSelect.addEventListener('change', () => { format = fmtSelect.value; saveSettings(); });
-    fontSelect.addEventListener('change', () => {
-      document.documentElement.style.setProperty('--font-family', fontSelect.value);
-      saveSettings();
-    });
-    fontColorInput.addEventListener('input', () => {
-      document.documentElement.style.setProperty('--font-color', fontColorInput.value);
-      saveSettings();
-    });
-    bgColorInput.addEventListener('input', () => {
-      document.documentElement.style.setProperty('--bg-color', bgColorInput.value);
-      saveSettings();
-    });
-    resetBtn.addEventListener('click', () => {
-      localStorage.removeItem('clockSettings');
-      loadSettings();
-    });
-
-    // Fullscreen
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    }
-    fullscreenBtn.addEventListener('click', toggleFullscreen);
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-      else if (e.key === 'r' || e.key === 'R') {
-        localStorage.removeItem('clockSettings');
-        loadSettings();
-      }
-    });
-
-    // Auto-hide controls into gear
-    function showControls() {
-      controls.classList.remove('hidden');
-      gear.classList.add('hidden');
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        if (!controls.matches(':hover')) {
-          controls.classList.add('hidden');
-          gear.classList.remove('hidden');
-          autoHideGear();
-        }
-      }, 5000);
-    }
-
-    function autoHideGear() {
-      clearTimeout(gearTimeout);
-      gearTimeout = setTimeout(() => {
-        if (!gear.matches(':hover')) gear.classList.add('hidden');
-      }, 5000);
-    }
-
-    gear.addEventListener('click', () => {
-      const isHidden = controls.classList.contains('hidden');
-      if (isHidden) {
-        showControls();
-      } else {
-        controls.classList.add('hidden');
-        gear.classList.remove('hidden');
-        autoHideGear();
-      }
-    });
-
-    // Mouse activity shows gear if hidden
-    document.addEventListener('mousemove', () => {
-      if (controls.classList.contains('hidden')) {
-        gear.classList.remove('hidden');
-        autoHideGear();
-      } else {
-        showControls();
-      }
-    });
-
-    showControls(); // start visible
-  </script>
+  <script src="../assets/js/time.js"></script>
 </body>
 </html>
