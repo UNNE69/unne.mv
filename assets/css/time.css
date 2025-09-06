@@ -1,172 +1,197 @@
+/* Root variables */
 :root{
-  --clock-size:120px;
-  --font-family:system-ui;
-  --font-color:#fff;
-  --bg-color:#000;
+  --clock-size: 120px;
+  --font-family: system-ui;
+  --font-color: #ffffff;
+  --bg-color: #000000;
   --glass-bg: rgba(255,255,255,0.05);
   --glass-blur: 10px;
 }
 
-/* Basic styling */
-html,body{
-  height:100%;
-  margin:0;
-  background:var(--bg-color);
-  color:var(--font-color);
-  font-family:var(--font-family);
+/* Reset */
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
 }
 
+/* Body */
+body{
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Clock */
 .wrap{
-  display:grid;
-  place-items:center;
-  height:100%;
+  text-align: center;
 }
 
 #clock{
-  font-size:var(--clock-size);
-  font-weight:600;
-  user-select:none;
-  text-shadow:0 6px 30px rgba(0,0,0,0.6);
+  font-size: var(--clock-size);
+  color: var(--font-color);
+  font-family: var(--font-family);
+  user-select: none;
 }
 
-/* Controls */
+/* Controls panel */
 .controls{
-  position:fixed;
-  top:16px;
-  right:16px;
-  background:var(--glass-bg);
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
-  padding:16px;
-  border-radius:14px;
-  box-shadow:0 12px 30px rgba(0,0,0,0.5);
-  transition:opacity .35s ease;
-  z-index:10;
+  border-radius: 15px;
+  padding: 20px;
+  color: #fff;
+  width: 250px;
+  transition: opacity 0.5s ease;
+  z-index: 50;
 }
 
 .controls.hidden{
-  opacity:0;
-  pointer-events:none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .control-row{
-  margin-bottom:10px;
-  display:flex;
-  align-items:center;
-  gap:8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-.controls input[type="number"], .controls input[type="color"]{
-  padding:6px 10px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  background:rgba(255,255,255,0.1);
-  color:#fff;
+.control-row label{
+  font-size: 14px;
+  margin-right: 5px;
 }
 
-.controls button{
-  padding:6px 12px;
-  border-radius:8px;
-  border:none;
-  background:rgba(255,255,255,0.1);
-  color:#fff;
-  cursor:pointer;
-  transition:0.2s;
+.control-row input[type="number"],
+.control-row input[type="color"]{
+  padding: 5px;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+  cursor: pointer;
 }
 
-.controls button:hover{
-  background:rgba(255,255,255,0.2);
+.control-row button{
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-weight: bold;
+  transition: 0.2s;
+  margin-right: 5px;
 }
 
-/* Custom select wrapper */
-.custom-select-wrapper{
-  position:relative;
-  width:220px;
-  cursor:pointer;
-  z-index:20;
-}
-
-.custom-select{
-  padding:10px 14px;
-  background:var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  border-radius:10px;
-  color:#fff;
-  user-select:none;
-  transition:0.25s;
-}
-
-.custom-select:hover{
-  background:rgba(255,255,255,0.08);
-}
-
-/* Dropdown list */
-.custom-options{
-  list-style:none;
-  padding:0;
-  margin:0;
-  position:absolute;
-  top:calc(100% + 6px);
-  left:0;
-  width:100%;
-  background:var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  border-radius:10px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.4);
-  max-height:220px;
-  overflow-y:auto;
-  display:none;
-  transition:0.25s;
-}
-
-.custom-options.open{
-  display:block;
-}
-
-.custom-options li{
-  padding:10px 14px;
-  color:#fff;
-  transition:0.2s;
-}
-
-.custom-options li:hover{
-  background:rgba(255,255,255,0.1);
-}
-
-/* Scrollbar */
-.custom-options::-webkit-scrollbar{
-  width:6px;
-}
-.custom-options::-webkit-scrollbar-thumb{
-  background:rgba(255,255,255,0.3);
-  border-radius:3px;
-}
-.custom-options::-webkit-scrollbar-track{
-  background:rgba(255,255,255,0.05);
-  border-radius:3px;
+.control-row button:hover{
+  background: rgba(255,255,255,0.2);
 }
 
 /* Gear icon */
 .gear{
-  position:fixed;
-  top:16px;
-  right:16px;
-  font-size:28px;
-  cursor:pointer;
-  transition:opacity .3s;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+
+/* Custom select wrapper */
+.custom-select-wrapper{
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  z-index: 20;
+  margin-top: 5px;
+}
+
+/* The clickable select box */
+.custom-select{
+  padding: 10px 14px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: 10px;
+  color: #fff;
+  user-select: none;
+  transition: background 0.25s;
+}
+
+.custom-select:hover{
+  background: rgba(255,255,255,0.08);
+}
+
+/* The dropdown options list */
+.custom-options{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  max-height: 220px;
+  overflow-y: auto;
+
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Open state */
+.custom-options.open{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Individual option items */
+.custom-options li{
+  padding: 10px 14px;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.custom-options li:hover{
+  background: rgba(255,255,255,0.1);
+}
+
+/* Scrollbar */
+.custom-options::-webkit-scrollbar{
+  width: 6px;
+}
+.custom-options::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.3);
+  border-radius: 3px;
+}
+.custom-options::-webkit-scrollbar-track{
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
 }
 
 /* Responsive */
-@media screen and (max-width:600px){
-  #clock{
-    font-size:calc(var(--clock-size)/2);
-  }
+@media (max-width: 500px){
   .controls{
-    width:90%;
-    right:5%;
-    padding:12px;
+    width: 90%;
+    padding: 15px;
   }
-  .custom-select-wrapper{
-    width:100%;
+  #clock{
+    font-size: calc(var(--clock-size) * 0.7);
   }
 }
