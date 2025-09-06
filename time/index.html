@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Time</title>
+  <title>Time Clock — Maldives Default</title>
   <style>
     :root { 
       --clock-size: 120px; 
@@ -36,7 +36,7 @@
       color: var(--font-color);
     }
 
-    .controls {
+    .controls, .gear {
       position: fixed;
       top: 12px;
       right: 12px;
@@ -52,7 +52,7 @@
       opacity: 1;
       transition: opacity 0.8s ease;
     }
-    .controls.hidden { opacity: 0; pointer-events: none; }
+    .controls.hidden, .gear.hidden { opacity: 0; pointer-events: none; }
 
     .controls label { opacity: 0.9; }
     .controls input,
@@ -66,25 +66,23 @@
       outline: none;
       cursor: pointer;
     }
-
-    .controls select option {
-      background: #111;
-      color: #fff;
-    }
-
+    .controls select option { background: #111; color: #fff; }
     .controls input[type="color"] {
-      padding: 0;
-      border: none;
-      background: none;
-      width: 40px;
-      height: 28px;
-      cursor: pointer;
+      padding: 0; border: none; background: none; width: 40px; height: 28px; cursor: pointer;
     }
-
     .controls button:hover,
     .controls select:hover,
     .controls input:hover {
       border-color: rgba(255,255,255,0.65);
+    }
+
+    .gear {
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 20px;
     }
 
     @media (max-width: 600px) {
@@ -97,13 +95,13 @@
     <div id="clock">00:00:00</div>
   </div>
 
-  <div class="controls" id="controls">
+  <div class="controls hidden" id="controls">
     <label for="size">Size</label>
-    <input id="size" type="number" min="20" step="2" value="120" />px
+    <input id="size" type="number" min="20" step="2" />px
 
     <label for="tz">Time</label>
     <select id="tz">
-      <option value="Indian/Maldives" selected>Maldives (Default)</option>
+      <option value="Indian/Maldives">Maldives (Default)</option>
       <option value="local">Your device</option>
       <option value="Asia/Kolkata">India (IST)</option>
       <option value="Asia/Dubai">UAE</option>
@@ -114,13 +112,13 @@
     </select>
 
     <select id="format">
-      <option value="24" selected>24-hour</option>
+      <option value="24">24-hour</option>
       <option value="12">12-hour</option>
     </select>
 
     <label for="font">Font</label>
     <select id="font">
-      <option value="system-ui" selected>System</option>
+      <option value="system-ui">System</option>
       <option value="Arial">Arial</option>
       <option value="Courier New">Courier</option>
       <option value="Georgia">Georgia</option>
@@ -130,22 +128,26 @@
     </select>
 
     <label for="fontColor">Font Color</label>
-    <input id="fontColor" type="color" value="#ffffff">
+    <input id="fontColor" type="color">
 
     <label for="bgColor">Background</label>
-    <input id="bgColor" type="color" value="#000000">
+    <input id="bgColor" type="color">
 
     <button id="fullscreen">Fullscreen (F)</button>
     <button id="reset">Reset</button>
   </div>
 
+  <div class="gear hidden" id="gear">⚙️</div>
+
   <script>
-    const DEFAULT_TZ = 'Indian/Maldives';
-    const DEFAULT_SIZE = 120;
-    const DEFAULT_FORMAT = '24';
-    const DEFAULT_FONT = 'system-ui';
-    const DEFAULT_FONT_COLOR = '#ffffff';
-    const DEFAULT_BG_COLOR = '#000000';
+    const DEFAULTS = {
+      tz: 'Indian/Maldives',
+      size: 120,
+      format: '24',
+      font: 'system-ui',
+      fontColor: '#ffffff',
+      bgColor: '#000000'
+    };
 
     const clockEl = document.getElementById('clock');
     const sizeInput = document.getElementById('size');
@@ -157,26 +159,40 @@
     const resetBtn = document.getElementById('reset');
     const fullscreenBtn = document.getElementById('fullscreen');
     const controls = document.getElementById('controls');
+    const gear = document.getElementById('gear');
 
-    let currentTZ = DEFAULT_TZ;
-    let format = DEFAULT_FORMAT;
-    let hideTimeout;
+    let currentTZ, format;
+    let hideTimeout, gearTimeout;
 
-    function applyDefaults() {
-      document.documentElement.style.setProperty('--clock-size', DEFAULT_SIZE + 'px');
-      document.documentElement.style.setProperty('--font-family', DEFAULT_FONT);
-      document.documentElement.style.setProperty('--font-color', DEFAULT_FONT_COLOR);
-      document.documentElement.style.setProperty('--bg-color', DEFAULT_BG_COLOR);
-      sizeInput.value = DEFAULT_SIZE;
-      tzSelect.value = DEFAULT_TZ;
-      fmtSelect.value = DEFAULT_FORMAT;
-      fontSelect.value = DEFAULT_FONT;
-      fontColorInput.value = DEFAULT_FONT_COLOR;
-      bgColorInput.value = DEFAULT_BG_COLOR;
-      currentTZ = DEFAULT_TZ;
-      format = DEFAULT_FORMAT;
+    // Load from localStorage or defaults
+    function loadSettings() {
+      const s = JSON.parse(localStorage.getItem('clockSettings')) || DEFAULTS;
+      currentTZ = s.tz;
+      format = s.format;
+      document.documentElement.style.setProperty('--clock-size', s.size + 'px');
+      document.documentElement.style.setProperty('--font-family', s.font);
+      document.documentElement.style.setProperty('--font-color', s.fontColor);
+      document.documentElement.style.setProperty('--bg-color', s.bgColor);
+      sizeInput.value = s.size;
+      tzSelect.value = s.tz;
+      fmtSelect.value = s.format;
+      fontSelect.value = s.font;
+      fontColorInput.value = s.fontColor;
+      bgColorInput.value = s.bgColor;
     }
-    applyDefaults();
+    loadSettings();
+
+    function saveSettings() {
+      const s = {
+        tz: currentTZ,
+        size: Number(sizeInput.value),
+        format,
+        font: fontSelect.value,
+        fontColor: fontColorInput.value,
+        bgColor: bgColorInput.value
+      };
+      localStorage.setItem('clockSettings', JSON.stringify(s));
+    }
 
     function getTimeString(date, tz) {
       const hour12 = (format === '12');
@@ -204,22 +220,30 @@
     }
     tick();
 
+    // Inputs
     sizeInput.addEventListener('input', () => {
-      const v = Math.max(20, Number(sizeInput.value) || DEFAULT_SIZE);
+      const v = Math.max(20, Number(sizeInput.value) || DEFAULTS.size);
       document.documentElement.style.setProperty('--clock-size', v + 'px');
+      saveSettings();
     });
-    tzSelect.addEventListener('change', () => { currentTZ = tzSelect.value; });
-    fmtSelect.addEventListener('change', () => { format = fmtSelect.value; });
+    tzSelect.addEventListener('change', () => { currentTZ = tzSelect.value; saveSettings(); });
+    fmtSelect.addEventListener('change', () => { format = fmtSelect.value; saveSettings(); });
     fontSelect.addEventListener('change', () => {
       document.documentElement.style.setProperty('--font-family', fontSelect.value);
+      saveSettings();
     });
     fontColorInput.addEventListener('input', () => {
       document.documentElement.style.setProperty('--font-color', fontColorInput.value);
+      saveSettings();
     });
     bgColorInput.addEventListener('input', () => {
       document.documentElement.style.setProperty('--bg-color', bgColorInput.value);
+      saveSettings();
     });
-    resetBtn.addEventListener('click', applyDefaults);
+    resetBtn.addEventListener('click', () => {
+      localStorage.removeItem('clockSettings');
+      loadSettings();
+    });
 
     // Fullscreen
     function toggleFullscreen() {
@@ -230,25 +254,57 @@
       }
     }
     fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-      else if (e.key === 'r' || e.key === 'R') applyDefaults();
+      else if (e.key === 'r' || e.key === 'R') {
+        localStorage.removeItem('clockSettings');
+        loadSettings();
+      }
     });
 
-    // Controls auto-hide
+    // Auto-hide controls into gear
     function showControls() {
       controls.classList.remove('hidden');
+      gear.classList.add('hidden');
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => {
-        if (!controls.matches(':hover')) controls.classList.add('hidden');
+        if (!controls.matches(':hover')) {
+          controls.classList.add('hidden');
+          gear.classList.remove('hidden');
+          autoHideGear();
+        }
       }, 5000);
     }
-    showControls();
-    document.addEventListener('mousemove', showControls);
-    controls.addEventListener('mouseenter', showControls);
-    controls.addEventListener('mouseleave', showControls);
+
+    function autoHideGear() {
+      clearTimeout(gearTimeout);
+      gearTimeout = setTimeout(() => {
+        if (!gear.matches(':hover')) gear.classList.add('hidden');
+      }, 5000);
+    }
+
+    gear.addEventListener('click', () => {
+      const isHidden = controls.classList.contains('hidden');
+      if (isHidden) {
+        showControls();
+      } else {
+        controls.classList.add('hidden');
+        gear.classList.remove('hidden');
+        autoHideGear();
+      }
+    });
+
+    // Mouse activity shows gear if hidden
+    document.addEventListener('mousemove', () => {
+      if (controls.classList.contains('hidden')) {
+        gear.classList.remove('hidden');
+        autoHideGear();
+      } else {
+        showControls();
+      }
+    });
+
+    showControls(); // start visible
   </script>
 </body>
 </html>
