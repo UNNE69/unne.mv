@@ -1,109 +1,164 @@
-:root {
-  --clock-size: 120px;
-  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  --font-color: #ffffff;
-  --bg-color: #000000;
+:root{
+  --clock-size:120px;
+  --font-family:system-ui;
+  --font-color:#fff;
+  --bg-color:#000;
 }
 
-/* Base */
-* { box-sizing: border-box; }
-html,body { height:100%; margin:0; background:var(--bg-color); color:var(--font-color); font-family:var(--font-family); transition:background 0.35s ease, color 0.35s ease; }
+/* Basic styling */
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg-color);
+  color:var(--font-color);
+  font-family:var(--font-family);
+}
 
-.wrap {
-  min-height:100%;
+.wrap{
   display:grid;
   place-items:center;
-  padding:40px 20px;
-  text-align:center;
+  height:100%;
 }
 
-/* Clock */
-#clock {
-  font-size: var(--clock-size);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-shadow: 0 6px 30px rgba(0,0,0,0.6), 0 0 12px rgba(255,255,255,0.04);
-  user-select: none;
-  transition: font-size 0.25s ease, color 0.25s ease, font-family 0.25s ease;
+#clock{
+  font-size:var(--clock-size);
+  font-weight:600;
+  user-select:none;
+  text-shadow:0 6px 30px rgba(0,0,0,0.6);
 }
 
-.tz-label {
-  margin-top: 10px;
-  font-size: 14px;
-  opacity: 0.85;
-  color: rgba(255,255,255,0.85);
+/* Controls */
+.controls{
+  position:fixed;
+  top:16px;
+  right:16px;
+  background:rgba(20,20,20,0.95);
+  padding:14px;
+  border-radius:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.5);
+  transition:opacity .35s ease;
+  z-index:10;
 }
 
-/* Controls & Gear */
-.controls, .gear {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  background: linear-gradient(180deg, rgba(30,30,30,0.95), rgba(15,15,15,0.9));
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 14px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-  backdrop-filter: blur(6px);
-  transition: opacity .45s ease, transform .35s ease;
-  transform-origin: top right;
-}
-.controls.hidden, .gear.hidden { opacity: 0; pointer-events: none; transform: translateY(-10px) scale(.98); }
-
-.controls label { font-size: 13px; opacity: 0.95; margin-right:4px; }
-
-/* Inputs */
-.controls input[type="number"],
-.controls select,
-.controls button {
-  background: #0f0f10;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 13px;
-  outline: none;
-  cursor: pointer;
-  min-width: 72px;
-}
-.controls select { min-width: 120px; max-width: 220px; }
-.controls input[type="color"] {
-  width: 40px;
-  height: 28px;
-  padding: 0;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background: transparent;
-}
-.controls button { min-width: 86px; }
-
-.controls input:focus, .controls select:focus, .controls button:focus {
-  box-shadow: 0 4px 12px rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.18);
+.controls.hidden{
+  opacity:0;
+  pointer-events:none;
 }
 
-/* Gear button */
-.gear {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  justify-content: center;
-  align-items: center;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
-  display: flex;
+.control-row{
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
-.gear:hover { background: rgba(255,255,255,0.03); transform: scale(1.02); }
 
-/* Responsive */
-@media (max-width:600px){
-  #clock { font-size: min(var(--clock-size), 18vw); }
-  .controls { right: 10px; left: 10px; top: 10px; justify-content: center; gap:8px; flex-wrap:wrap; }
+.controls input[type="number"], .controls input[type="color"]{
+  padding:6px 8px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+}
+
+.controls button{
+  padding:6px 10px;
+  border-radius:8px;
+  border:none;
+  background:#444;
+  color:#fff;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.controls button:hover{
+  background:#666;
+}
+
+/* Custom select styling */
+.custom-select-wrapper{
+  position:relative;
+  width:200px;
+  cursor:pointer;
+}
+
+.custom-select{
+  padding:8px 12px;
+  background:#222;
+  border-radius:8px;
+  color:#fff;
+  user-select:none;
+  transition:0.2s;
+}
+
+.custom-select:hover{
+  background:#333;
+}
+
+.custom-options{
+  list-style:none;
+  padding:0;
+  margin:0;
+  position:absolute;
+  top:110%;
+  left:0;
+  width:100%;
+  background:#222;
+  border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  max-height:200px;
+  overflow-y:auto;
+  display:none;
+  z-index:20;
+  transition:0.3s;
+}
+
+.custom-options.open{
+  display:block;
+}
+
+.custom-options li{
+  padding:8px 12px;
+  color:#fff;
+  transition:0.2s;
+}
+
+.custom-options li:hover{
+  background:#555;
+}
+
+/* Gear icon */
+.gear{
+  position:fixed;
+  top:16px;
+  right:16px;
+  font-size:28px;
+  cursor:pointer;
+  transition:opacity .3s;
+}
+
+/* Scrollbar for dropdowns */
+.custom-options::-webkit-scrollbar{
+  width:6px;
+}
+.custom-options::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.3);
+  border-radius:3px;
+}
+.custom-options::-webkit-scrollbar-track{
+  background:rgba(0,0,0,0.1);
+  border-radius:3px;
+}
+
+/* Responsive clock */
+@media screen and (max-width:600px){
+  #clock{
+    font-size:calc(var(--clock-size)/2);
+  }
+  .controls{
+    width:90%;
+    right:5%;
+    padding:10px;
+  }
+  .custom-select-wrapper{
+    width:100%;
+  }
 }
