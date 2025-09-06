@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Time Clock — Maldives Default</title>
+<title>Time Clock — Maldives</title>
 <link rel="stylesheet" href="../assets/css/time.css">
 </head>
 <body>
   <div class="wrap">
     <div id="clock">--:--:--</div>
-    <div id="tzLabel" class="tz-label"></div>
   </div>
 
   <div class="controls hidden" id="controls">
@@ -74,6 +73,161 @@
 
   <div class="gear" id="gear">⚙️</div>
 
-  <script src="../assets/js/time.js"></script>
+<script>
+(() => {
+  const DEFAULTS = {
+    tz: 'Indian/Maldives',
+    size: 120,
+    format: '24',
+    font: 'system-ui',
+    fontColor: '#ffffff',
+    bgColor: '#000000'
+  };
+
+  const clock = document.getElementById('clock');
+  const controls = document.getElementById('controls');
+  const gear = document.getElementById('gear');
+
+  const sizeInput = document.getElementById('size');
+  const fontColorInput = document.getElementById('fontColor');
+  const bgColorInput = document.getElementById('bgColor');
+
+  const tzSelect = document.getElementById('tzSelect');
+  const tzOptions = document.getElementById('tzOptions');
+  const formatSelect = document.getElementById('formatSelect');
+  const formatOptions = document.getElementById('formatOptions');
+  const fontSelect = document.getElementById('fontSelect');
+  const fontOptions = document.getElementById('fontOptions');
+
+  const fullscreenBtn = document.getElementById('fullscreen');
+  const resetBtn = document.getElementById('reset');
+
+  let settings = JSON.parse(localStorage.getItem('timeSettings')) || DEFAULTS;
+
+  function applySettings() {
+    document.documentElement.style.setProperty('--clock-size', settings.size+'px');
+    document.documentElement.style.setProperty('--font-family', settings.font);
+    document.documentElement.style.setProperty('--font-color', settings.fontColor);
+    document.documentElement.style.setProperty('--bg-color', settings.bgColor);
+
+    sizeInput.value = settings.size;
+    fontColorInput.value = settings.fontColor;
+    bgColorInput.value = settings.bgColor;
+
+    tzSelect.textContent = settings.tzLabel || 'Maldives (GMT +5 / UTC +5)';
+    formatSelect.textContent = settings.format==='12'?'12-hour':'24-hour';
+    fontSelect.textContent = settings.font;
+  }
+
+  function saveSettings() {
+    localStorage.setItem('timeSettings', JSON.stringify(settings));
+  }
+
+  function pad(n){return n.toString().padStart(2,'0');}
+  function updateClock(){
+    const now = new Date();
+    const options = {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:settings.format==='12'};
+    if(settings.tz!=='local') options.timeZone = settings.tz;
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(now);
+    const h = parts.find(p=>p.type==='hour')?.value || '00';
+    const m = parts.find(p=>p.type==='minute')?.value || '00';
+    const s = parts.find(p=>p.type==='second')?.value || '00';
+    const dayPeriod = parts.find(p=>p.type==='dayPeriod')?.value;
+    clock.textContent = `${h}:${m}:${s}${dayPeriod?(' '+dayPeriod.toUpperCase()):''}`;
+    requestAnimationFrame(updateClock);
+  }
+  updateClock();
+
+  function makeCustomSelect(selectEl, optionsEl, setFunc){
+    selectEl.addEventListener('click', ()=>{
+      optionsEl.classList.toggle('open');
+      setTimeout(()=>{ optionsEl.classList.remove('open'); }, 5000);
+    });
+    optionsEl.querySelectorAll('li').forEach(li=>{
+      li.addEventListener('click', ()=>{
+        const val = li.dataset.value;
+        const label = li.textContent;
+        setFunc(val,label);
+        optionsEl.classList.remove('open');
+      });
+    });
+  }
+
+  // Full IANA timezone list with labels and GMT/UTC
+  const TIMEZONES = [
+    {tz:'Pacific/Midway',label:'Midway Island (GMT -11 / UTC -11)'},
+    {tz:'America/Adak',label:'Adak (GMT -10 / UTC -10)'},
+    {tz:'Pacific/Honolulu',label:'Hawaii (GMT -10 / UTC -10)'},
+    {tz:'America/Anchorage',label:'Alaska (GMT -9 / UTC -9)'},
+    {tz:'America/Los_Angeles',label:'Los Angeles (GMT -8 / UTC -8)'},
+    {tz:'America/Denver',label:'Denver (GMT -7 / UTC -7)'},
+    {tz:'America/Chicago',label:'Chicago (GMT -6 / UTC -6)'},
+    {tz:'America/New_York',label:'New York (GMT -5 / UTC -5)'},
+    {tz:'America/Caracas',label:'Caracas (GMT -4 / UTC -4)'},
+    {tz:'America/Halifax',label:'Halifax (GMT -4 / UTC -4)'},
+    {tz:'America/St_Johns',label:'St. Johns (GMT -3:30 / UTC -3:30)'},
+    {tz:'America/Argentina/Buenos_Aires',label:'Buenos Aires (GMT -3 / UTC -3)'},
+    {tz:'Atlantic/South_Georgia',label:'South Georgia (GMT -2 / UTC -2)'},
+    {tz:'Atlantic/Azores',label:'Azores (GMT -1 / UTC -1)'},
+    {tz:'Europe/London',label:'London (GMT 0 / UTC 0)'},
+    {tz:'Europe/Berlin',label:'Berlin (GMT +1 / UTC +1)'},
+    {tz:'Europe/Moscow',label:'Moscow (GMT +3 / UTC +3)'},
+    {tz:'Asia/Dubai',label:'Dubai (GMT +4 / UTC +4)'},
+    {tz:'Asia/Karachi',label:'Karachi (GMT +5 / UTC +5)'},
+    {tz:'Indian/Maldives',label:'Maldives (GMT +5 / UTC +5)'},
+    {tz:'Asia/Kolkata',label:'India (GMT +5:30 / UTC +5:30)'},
+    {tz:'Asia/Dhaka',label:'Dhaka (GMT +6 / UTC +6)'},
+    {tz:'Asia/Bangkok',label:'Bangkok (GMT +7 / UTC +7)'},
+    {tz:'Asia/Shanghai',label:'Shanghai (GMT +8 / UTC +8)'},
+    {tz:'Asia/Tokyo',label:'Tokyo (GMT +9 / UTC +9)'},
+    {tz:'Australia/Sydney',label:'Sydney (GMT +10 / UTC +10)'},
+    {tz:'Pacific/Auckland',label:'Auckland (GMT +12 / UTC +12)'}
+  ];
+
+  TIMEZONES.forEach(t=>{
+    const li = document.createElement('li');
+    li.dataset.value = t.tz;
+    li.textContent = t.label;
+    tzOptions.appendChild(li);
+  });
+
+  makeCustomSelect(tzSelect,tzOptions,(val,label)=>{
+    settings.tz = val;
+    settings.tzLabel = label;
+    applySettings(); saveSettings();
+  });
+
+  makeCustomSelect(formatSelect,formatOptions,(val,label)=>{
+    settings.format = val;
+    applySettings(); saveSettings();
+  });
+
+  makeCustomSelect(fontSelect,fontOptions,(val,label)=>{
+    settings.font = val;
+    applySettings(); saveSettings();
+  });
+
+  sizeInput.addEventListener('input',()=>{ settings.size=Math.min(Math.max(parseInt(sizeInput.value)||120,20),800); applySettings(); saveSettings(); });
+  fontColorInput.addEventListener('input',()=>{ settings.fontColor=fontColorInput.value; applySettings(); saveSettings(); });
+  bgColorInput.addEventListener('input',()=>{ settings.bgColor=bgColorInput.value; applySettings(); saveSettings(); });
+
+  function toggleFullscreen(){
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  fullscreenBtn.addEventListener('click',toggleFullscreen);
+  document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f') toggleFullscreen();});
+
+  resetBtn.addEventListener('click',()=>{
+    settings=Object.assign({},DEFAULTS); applySettings(); saveSettings();
+  });
+
+  // Gear & auto-hide menu
+  function showControls(){controls.classList.remove('hidden'); gear.classList.add('hidden'); setTimeout(()=>{controls.classList.add('hidden'); gear.classList.remove('hidden');},5000);}
+  gear.addEventListener('click',showControls);
+
+  applySettings();
+})();
+</script>
 </body>
 </html>
