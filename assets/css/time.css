@@ -1,0 +1,113 @@
+:root { 
+  --clock-size: 120px; 
+  --font-family: system-ui; 
+  --font-color: #ffffff; 
+  --bg-color: #000000;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--font-color);
+  font-family: var(--font-family), sans-serif;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+.wrap {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+#clock {
+  font-size: var(--clock-size);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 10px rgba(255,255,255,0.2);
+  user-select: none;
+  color: var(--font-color);
+  transition: font-size 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+}
+
+/* Controls and Gear styling same as before */
+.controls, .gear {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: rgba(25,25,25,0.9);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  opacity: 1;
+  transition: opacity 0.6s ease, transform 0.4s ease;
+  transform: translateY(0);
+  backdrop-filter: blur(8px);
+}
+.controls.hidden, .gear.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-15px);
+}
+
+.controls label {
+  opacity: 0.85;
+  font-size: 13px;
+}
+
+.controls input,
+.controls select,
+.controls button {
+  background: #111;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.3s ease;
+}
+.controls select option {
+  background: #111;
+  color: #fff;
+}
+.controls input[type="color"] {
+  padding: 0;
+  border: none;
+  background: none;
+  width: 42px;
+  height: 28px;
+  cursor: pointer;
+}
+.controls button:hover,
+.controls select:hover,
+.controls input:hover {
+  border-color: rgba(255,255,255,0.6);
+  background: #222;
+}
+
+.gear {
+  width: 46px;
+  height: 46px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 22px;
+  border-radius: 50%;
+  padding: 0;
+}
+.gear:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+@media (max-width: 600px) {
+  #clock { font-size: min(var(--clock-size), 18vw); }
+}
