@@ -7,183 +7,225 @@
   <link rel="stylesheet" href="../assets/css/time.css">
 </head>
 <body>
-  <div id="timeDisplay"></div>
+  <div class="wrap">
+    <div id="clock"></div>
+  </div>
 
   <!-- Gear / Close button -->
-  <button id="gearBtn" class="gear-btn">⚙</button>
+  <button id="gearBtn" class="gear">⚙</button>
 
-  <!-- Settings menu -->
-  <div id="menu" class="menu hidden">
-    <label>Font Size:
+  <!-- Controls -->
+  <div id="controls" class="controls hidden">
+    <div class="control-row">
+      <label>Font Size</label>
       <input type="range" id="fontSize" min="50" max="600" value="120">
-    </label>
+    </div>
 
-    <label>Font:
-      <select id="fontSelect">
-        <option value="Arial">Arial</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Georgia">Georgia</option>
-        <option value="Impact">Impact</option>
-        <option value="Tahoma">Tahoma</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Monospace">Monospace</option>
-      </select>
-    </label>
+    <div class="control-row">
+      <label>Font</label>
+      <div class="custom-select-wrapper">
+        <div class="custom-select" data-value="Arial">Arial</div>
+        <ul class="custom-options">
+          <li data-value="Arial">Arial</li>
+          <li data-value="Courier New">Courier New</li>
+          <li data-value="Georgia">Georgia</li>
+          <li data-value="Impact">Impact</li>
+          <li data-value="Tahoma">Tahoma</li>
+          <li data-value="Times New Roman">Times New Roman</li>
+          <li data-value="Verdana">Verdana</li>
+          <li data-value="Monospace">Monospace</li>
+        </ul>
+      </div>
+    </div>
 
-    <label>Font Color:
+    <div class="control-row">
+      <label>Font Color</label>
       <input type="color" id="fontColor" value="#ffffff">
-    </label>
+    </div>
 
-    <label>Background Color:
+    <div class="control-row">
+      <label>Background</label>
       <input type="color" id="bgColor" value="#000000">
-    </label>
+    </div>
 
-    <label>Time Zone:
-      <select id="timeZone"></select>
-    </label>
+    <div class="control-row">
+      <label>Time Zone</label>
+      <div class="custom-select-wrapper">
+        <div class="custom-select" data-value="Indian/Maldives">Indian/Maldives</div>
+        <ul id="timeZoneOptions" class="custom-options"></ul>
+      </div>
+    </div>
 
-    <label>Format:
-      <select id="timeFormat">
-        <option value="24">24-hour</option>
-        <option value="12">12-hour</option>
-      </select>
-    </label>
+    <div class="control-row">
+      <label>Format</label>
+      <div class="custom-select-wrapper">
+        <div class="custom-select" data-value="24">24-hour</div>
+        <ul class="custom-options">
+          <li data-value="24">24-hour</li>
+          <li data-value="12">12-hour</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <script>
-    const timeDisplay = document.getElementById("timeDisplay");
-    const menu = document.getElementById("menu");
+    const clock = document.getElementById("clock");
     const gearBtn = document.getElementById("gearBtn");
-
+    const controls = document.getElementById("controls");
     const fontSize = document.getElementById("fontSize");
-    const fontSelect = document.getElementById("fontSelect");
     const fontColor = document.getElementById("fontColor");
     const bgColor = document.getElementById("bgColor");
-    const timeZoneSelect = document.getElementById("timeZone");
-    const timeFormat = document.getElementById("timeFormat");
-
+    const timeZoneOptions = document.getElementById("timeZoneOptions");
     let hideTimeout;
 
-    // Load time zones
-    const timeZones = Intl.supportedValuesOf("timeZone");
-    timeZones.forEach(tz => {
+    // Load supported timezones
+    const zones = Intl.supportedValuesOf("timeZone");
+    zones.forEach(tz => {
       const offset = new Date().toLocaleTimeString("en-US", {
         timeZone: tz,
         timeZoneName: "short"
       }).split(" ").pop();
-      const option = document.createElement("option");
-      option.value = tz;
-      option.textContent = `${tz.replace("_", " ")} (${offset})`;
-      timeZoneSelect.appendChild(option);
+      const li = document.createElement("li");
+      li.dataset.value = tz;
+      li.textContent = `${tz.replace("_", " ")} (${offset})`;
+      timeZoneOptions.appendChild(li);
     });
-    timeZoneSelect.value = "Indian/Maldives";
 
-    function updateTime() {
-      const tz = timeZoneSelect.value;
-      const format = timeFormat.value;
+    // Defaults
+    let settings = {
+      fontSize: "120",
+      font: "Arial",
+      fontColor: "#ffffff",
+      bgColor: "#000000",
+      timeZone: "Indian/Maldives",
+      format: "24"
+    };
+
+    // Load saved settings
+    if (localStorage.getItem("timeSettings")) {
+      settings = JSON.parse(localStorage.getItem("timeSettings"));
+    }
+
+    // Apply settings
+    function applySettings() {
+      clock.style.fontSize = settings.fontSize + "px";
+      clock.style.fontFamily = settings.font;
+      clock.style.color = settings.fontColor;
+      document.body.style.backgroundColor = settings.bgColor;
+      document.querySelectorAll(".custom-select").forEach(sel => {
+        if (sel.dataset.value === settings.font ||
+            sel.dataset.value === settings.timeZone ||
+            sel.dataset.value === settings.format) {
+          sel.textContent = sel.dataset.value;
+        }
+      });
+    }
+
+    function saveSettings() {
+      localStorage.setItem("timeSettings", JSON.stringify(settings));
+    }
+
+    // Clock update
+    function updateClock() {
       const options = {
         hour: "numeric",
         minute: "numeric",
         second: "numeric",
-        timeZone: tz
+        timeZone: settings.timeZone,
+        hour12: settings.format === "12"
       };
-      if (format === "24") {
-        options.hour12 = false;
-      } else {
-        options.hour12 = true;
-      }
-      const now = new Date().toLocaleTimeString([], options);
-      timeDisplay.textContent = now;
+      clock.textContent = new Date().toLocaleTimeString([], options);
     }
-
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    // Apply settings
-    function applySettings() {
-      timeDisplay.style.fontSize = fontSize.value + "px";
-      timeDisplay.style.fontFamily = fontSelect.value;
-      timeDisplay.style.color = fontColor.value;
-      document.body.style.backgroundColor = bgColor.value;
-    }
+    setInterval(updateClock, 1000);
+    updateClock();
     applySettings();
 
-    [fontSize, fontSelect, fontColor, bgColor, timeZoneSelect, timeFormat]
-      .forEach(el => el.addEventListener("input", () => {
-        applySettings();
-        saveSettings();
-        // Close dropdown automatically
-        if (el.tagName === "SELECT") el.blur();
-      }));
-
-    // Save settings
-    function saveSettings() {
-      localStorage.setItem("timeSettings", JSON.stringify({
-        fontSize: fontSize.value,
-        font: fontSelect.value,
-        fontColor: fontColor.value,
-        bgColor: bgColor.value,
-        timeZone: timeZoneSelect.value,
-        format: timeFormat.value
-      }));
-    }
-
-    // Load settings
-    function loadSettings() {
-      const s = JSON.parse(localStorage.getItem("timeSettings"));
-      if (!s) return;
-      fontSize.value = s.fontSize;
-      fontSelect.value = s.font;
-      fontColor.value = s.fontColor;
-      bgColor.value = s.bgColor;
-      timeZoneSelect.value = s.timeZone;
-      timeFormat.value = s.format;
+    // Events
+    fontSize.addEventListener("input", e => {
+      settings.fontSize = e.target.value;
       applySettings();
-    }
-    loadSettings();
+      saveSettings();
+    });
 
-    // Menu toggle
-    function showMenu() {
-      menu.classList.remove("hidden");
-      gearBtn.textContent = "✖"; // Change to close button
-      resetHideTimer();
-    }
+    fontColor.addEventListener("input", e => {
+      settings.fontColor = e.target.value;
+      applySettings();
+      saveSettings();
+    });
 
-    function hideMenu() {
-      menu.classList.add("hidden");
-      gearBtn.textContent = "⚙"; // Back to gear
-    }
+    bgColor.addEventListener("input", e => {
+      settings.bgColor = e.target.value;
+      applySettings();
+      saveSettings();
+    });
+
+    // Custom dropdown handling
+    document.querySelectorAll(".custom-select").forEach(select => {
+      select.addEventListener("click", function () {
+        document.querySelectorAll(".custom-options.open").forEach(opt => {
+          if (opt !== this.nextElementSibling) opt.classList.remove("open");
+        });
+        this.nextElementSibling.classList.toggle("open");
+      });
+    });
+
+    document.querySelectorAll(".custom-options").forEach(optList => {
+      optList.addEventListener("click", function (e) {
+        if (e.target.tagName === "LI") {
+          const value = e.target.dataset.value;
+          const display = this.previousElementSibling;
+          display.textContent = e.target.textContent;
+          display.dataset.value = value;
+          this.classList.remove("open");
+
+          if (display.closest(".control-row").querySelector("label").textContent.includes("Font")) {
+            settings.font = value;
+          } else if (display.closest(".control-row").querySelector("label").textContent.includes("Time Zone")) {
+            settings.timeZone = value;
+          } else if (display.closest(".control-row").querySelector("label").textContent.includes("Format")) {
+            settings.format = value;
+          }
+          applySettings();
+          saveSettings();
+        }
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".custom-select-wrapper")) {
+        document.querySelectorAll(".custom-options.open").forEach(opt => opt.classList.remove("open"));
+      }
+    });
+
+    // Gear toggle
+    gearBtn.addEventListener("click", () => {
+      if (controls.classList.contains("hidden")) {
+        controls.classList.remove("hidden");
+        gearBtn.textContent = "✖";
+        resetHideTimer();
+      } else {
+        controls.classList.add("hidden");
+        gearBtn.textContent = "⚙";
+      }
+    });
 
     function resetHideTimer() {
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => {
-        hideMenu();
+        controls.classList.add("hidden");
+        gearBtn.textContent = "⚙";
         gearBtn.style.opacity = "0";
       }, 5000);
     }
 
-    // Gear button click
-    gearBtn.addEventListener("click", () => {
-      if (menu.classList.contains("hidden")) {
-        showMenu();
-      } else {
-        hideMenu();
-      }
-    });
-
-    // Gear button show on hover
+    // Show gear on mouse move
     document.body.addEventListener("mousemove", () => {
       gearBtn.style.opacity = "1";
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        if (menu.classList.contains("hidden")) {
-          gearBtn.style.opacity = "0";
-        }
-      }, 5000);
+      if (controls.classList.contains("hidden")) resetHideTimer();
     });
 
-    // Fullscreen shortcut (F)
+    // Fullscreen toggle with F
     document.addEventListener("keydown", e => {
       if (e.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) {
