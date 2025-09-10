@@ -124,9 +124,9 @@ body {
   position: relative;
   width: 100%;
   cursor: pointer;
-  z-index: 3000;
   margin-top: 5px;
 }
+
 .custom-select {
   padding: 10px 14px;
   background: rgba(255,255,255,0.08);
@@ -135,6 +135,7 @@ body {
   color: #fff;
   user-select: none;
 }
+
 .custom-options {
   list-style: none;
   padding: 0;
@@ -149,26 +150,30 @@ body {
   box-shadow: 0 10px 25px rgba(0,0,0,0.6);
   max-height: 220px;
   overflow-y: auto;
-  z-index: 4000;
+  z-index: 5000; /* stays above other controls */
 
   opacity: 0;
   transform: translateY(-10px);
   pointer-events: none;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
 .custom-options.open {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
+
 .custom-options li {
   padding: 10px 14px;
   color: #fff;
   transition: background 0.2s;
 }
+
 .custom-options li:hover {
   background: rgba(255,255,255,0.2);
 }
+
 /* Scrollbar */
 .custom-options::-webkit-scrollbar {
   width: 6px;
