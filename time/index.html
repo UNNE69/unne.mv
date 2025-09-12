@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Time</title>
   <link rel="stylesheet" href="/assets/css/time.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Montserrat&family=Poppins&family=Lato&family=Oswald&family=Merriweather&family=Playfair+Display&family=Raleway&family=Ubuntu&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="wrap">
@@ -38,13 +39,55 @@
       <div class="custom-select-wrapper">
         <div class="custom-select" id="timeZone">Maldives (GMT+5)</div>
         <ul class="custom-options">
-          <li data-value="Indian/Maldives">Maldives (GMT+5)</li>
-          <li data-value="Asia/Kolkata">India – Kolkata (GMT+5:30)</li>
-          <li data-value="Asia/Dubai">UAE – Dubai (GMT+4)</li>
-          <li data-value="Europe/London">London (GMT+0)</li>
-          <li data-value="America/New_York">New York (GMT-5)</li>
-          <li data-value="Asia/Tokyo">Tokyo (GMT+9)</li>
-          <li data-value="Australia/Sydney">Sydney (GMT+10)</li>
+          <li class="search-box"><input type="text" placeholder="Search..." /></li>
+          <li data-value="Pacific/Midway">Samoa – Midway (GMT−11)</li>
+          <li data-value="Pacific/Honolulu">USA – Honolulu (HST, GMT−10)</li>
+          <li data-value="America/Anchorage">USA – Anchorage (AKST, GMT−9)</li>
+          <li data-value="America/Los_Angeles">USA – Los Angeles (PST, GMT−8)</li>
+          <li data-value="America/Denver">USA – Denver (MST, GMT−7)</li>
+          <li data-value="America/Chicago">USA – Chicago (CST, GMT−6)</li>
+          <li data-value="America/New_York">USA – New York (EST, GMT−5)</li>
+          <li data-value="America/Halifax">Canada – Halifax (AST, GMT−4)</li>
+          <li data-value="America/Sao_Paulo">Brazil – Sao Paulo (BRT, GMT−3)</li>
+          <li data-value="America/Argentina/Buenos_Aires">Argentina – Buenos Aires (ART, GMT−3)</li>
+          <li data-value="America/Godthab">Greenland – Nuuk (GMT−3)</li>
+          <li data-value="Atlantic/Azores">Portugal – Azores (GMT−1)</li>
+          <li data-value="Europe/London">UK – London (GMT+0)</li>
+          <li data-value="Europe/Berlin">Germany – Berlin (CET, GMT+1)</li>
+          <li data-value="Europe/Paris">France – Paris (CET, GMT+1)</li>
+          <li data-value="Europe/Madrid">Spain – Madrid (CET, GMT+1)</li>
+          <li data-value="Europe/Rome">Italy – Rome (CET, GMT+1)</li>
+          <li data-value="Europe/Warsaw">Poland – Warsaw (CET, GMT+1)</li>
+          <li data-value="Europe/Istanbul">Turkey – Istanbul (TRT, GMT+3)</li>
+          <li data-value="Europe/Moscow">Russia – Moscow (MSK, GMT+3)</li>
+          <li data-value="Africa/Cairo">Egypt – Cairo (EET, GMT+2)</li>
+          <li data-value="Africa/Johannesburg">South Africa – Johannesburg (SAST, GMT+2)</li>
+          <li data-value="Asia/Jerusalem">Israel – Jerusalem (IST, GMT+2)</li>
+          <li data-value="Asia/Dubai">UAE – Dubai (GST, GMT+4)</li>
+          <li data-value="Asia/Karachi">Pakistan – Karachi (PKT, GMT+5)</li>
+          <li data-value="Indian/Maldives">Maldives – Malé (MVT, GMT+5)</li>
+          <li data-value="Asia/Colombo">Sri Lanka – Colombo (IST, GMT+5:30)</li>
+          <li data-value="Asia/Kolkata">India – Kolkata (IST, GMT+5:30)</li>
+          <li data-value="Asia/Kathmandu">Nepal – Kathmandu (NPT, GMT+5:45)</li>
+          <li data-value="Asia/Dhaka">Bangladesh – Dhaka (BST, GMT+6)</li>
+          <li data-value="Asia/Yangon">Myanmar – Yangon (MMT, GMT+6:30)</li>
+          <li data-value="Asia/Bangkok">Thailand – Bangkok (ICT, GMT+7)</li>
+          <li data-value="Asia/Jakarta">Indonesia – Jakarta (WIB, GMT+7)</li>
+          <li data-value="Asia/Krasnoyarsk">Russia – Krasnoyarsk (KRAT, GMT+7)</li>
+          <li data-value="Asia/Shanghai">China – Shanghai (CST, GMT+8)</li>
+          <li data-value="Asia/Singapore">Singapore – Singapore (SGT, GMT+8)</li>
+          <li data-value="Asia/Taipei">Taiwan – Taipei (CST, GMT+8)</li>
+          <li data-value="Asia/Ulaanbaatar">Mongolia – Ulaanbaatar (ULAT, GMT+8)</li>
+          <li data-value="Asia/Seoul">South Korea – Seoul (KST, GMT+9)</li>
+          <li data-value="Asia/Tokyo">Japan – Tokyo (JST, GMT+9)</li>
+          <li data-value="Australia/Perth">Australia – Perth (AWST, GMT+8)</li>
+          <li data-value="Australia/Adelaide">Australia – Adelaide (ACST, GMT+9:30)</li>
+          <li data-value="Australia/Sydney">Australia – Sydney (AEST, GMT+10)</li>
+          <li data-value="Pacific/Noumea">New Caledonia – Noumea (NCT, GMT+11)</li>
+          <li data-value="Pacific/Auckland">New Zealand – Auckland (NZST, GMT+12)</li>
+          <li data-value="Pacific/Fiji">Fiji – Suva (FJT, GMT+12)</li>
+          <li data-value="Pacific/Tongatapu">Tonga – Nuku'alofa (TOT, GMT+13)</li>
+          <li data-value="Pacific/Kiritimati">Kiribati – Kiritimati (LINT, GMT+14)</li>
         </ul>
       </div>
     </div>
@@ -54,6 +97,7 @@
       <div class="custom-select-wrapper">
         <div class="custom-select" id="fontSelect">System UI</div>
         <ul class="custom-options">
+          <!-- System fonts -->
           <li data-value="system-ui">System UI</li>
           <li data-value="Arial">Arial</li>
           <li data-value="Georgia">Georgia</li>
@@ -61,6 +105,26 @@
           <li data-value="Verdana">Verdana</li>
           <li data-value="Tahoma">Tahoma</li>
           <li data-value="Monospace">Monospace</li>
+          <li data-value="Times New Roman">Times New Roman</li>
+          <li data-value="Comic Sans MS">Comic Sans MS</li>
+          <li data-value="Trebuchet MS">Trebuchet MS</li>
+          <li data-value="Impact">Impact</li>
+          <li data-value="Lucida Console">Lucida Console</li>
+          <li data-value="Gill Sans">Gill Sans</li>
+          <li data-value="Futura">Futura</li>
+          <li data-value="Franklin Gothic Medium">Franklin Gothic Medium</li>
+    
+          <!-- Google Fonts -->
+          <li data-value="Roboto">Roboto</li>
+          <li data-value="Open Sans">Open Sans</li>
+          <li data-value="Montserrat">Montserrat</li>
+          <li data-value="Poppins">Poppins</li>
+          <li data-value="Lato">Lato</li>
+          <li data-value="Oswald">Oswald</li>
+          <li data-value="Merriweather">Merriweather</li>
+          <li data-value="Playfair Display">Playfair Display</li>
+          <li data-value="Raleway">Raleway</li>
+          <li data-value="Ubuntu">Ubuntu</li>
         </ul>
       </div>
     </div>
