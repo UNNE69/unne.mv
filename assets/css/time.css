@@ -119,6 +119,8 @@ body {
   display: block;
 }
 
+/* FIX: works whether hidden via id or class */
+.gear.hidden,
 #gearBtn.hidden {
   opacity: 0;
   pointer-events: none;
