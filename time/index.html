@@ -150,291 +150,247 @@
   </div>
 
   <script>
-  (function () {
-    // ---------- Clock ----------
-    function updateClock() {
-      const now = new Date();
-      const format = localStorage.getItem("timeFormat") || "24";
-      const tz = localStorage.getItem("timeZone") || "Indian/Maldives";
-      try {
-        let options = { timeZone: tz, hour: "numeric", minute: "numeric", second: "numeric" };
-        options.hour12 = (format === "12");
-        const str = new Intl.DateTimeFormat([], options).format(now);
-        document.getElementById("clock").textContent = str;
-      } catch {
-        document.getElementById("clock").textContent = now.toLocaleTimeString();
+(function () {
+  // ---------- Clock ----------
+  function updateClock() {
+    const now = new Date();
+    const format = localStorage.getItem("timeFormat") || "24";
+    const tz = localStorage.getItem("timeZone") || "Indian/Maldives";
+    try {
+      let options = { timeZone: tz, hour: "numeric", minute: "numeric", second: "numeric" };
+      options.hour12 = (format === "12");
+      const str = new Intl.DateTimeFormat([], options).format(now);
+      document.getElementById("clock").textContent = str;
+    } catch {
+      document.getElementById("clock").textContent = now.toLocaleTimeString();
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ---------- Elements ----------
+  const clockEl = document.getElementById("clock");
+  const fontSize = document.getElementById("fontSize");
+  const fontColor = document.getElementById("fontColor");
+  const bgColor = document.getElementById("bgColor");
+
+  const gearBtn = document.getElementById("gearBtn");
+  const controls = document.getElementById("controls");
+  const wrappers = Array.from(document.querySelectorAll(".custom-select-wrapper"));
+
+  // ---------- Load saved prefs ----------
+  window.addEventListener("load", () => {
+    if (localStorage.getItem("fontSize")) {
+      document.documentElement.style.setProperty("--clock-size", localStorage.getItem("fontSize") + "px");
+      fontSize.value = localStorage.getItem("fontSize");
+    }
+    if (localStorage.getItem("fontColor")) {
+      document.documentElement.style.setProperty("--font-color", localStorage.getItem("fontColor"));
+      fontColor.value = localStorage.getItem("fontColor");
+    }
+    if (localStorage.getItem("bgColor")) {
+      document.documentElement.style.setProperty("--bg-color", localStorage.getItem("bgColor"));
+      bgColor.value = localStorage.getItem("bgColor");
+    }
+
+    const storedFormat = localStorage.getItem("timeFormat");
+    if (storedFormat) {
+      const el = document.getElementById("timeFormat");
+      if (el) el.textContent = (storedFormat === "12") ? "12-hour" : "24-hour";
+      el && (el.dataset.value = storedFormat);
+    }
+    const storedZone = localStorage.getItem("timeZone");
+    if (storedZone) {
+      const el = document.getElementById("timeZone");
+      if (el) {
+        const li = Array.from(document.querySelectorAll("#timeZone + .custom-options li")).find(l => l.dataset.value === storedZone);
+        if (li) el.textContent = li.textContent;
+        else el.textContent = storedZone;
+        el.dataset.value = storedZone;
       }
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+    const storedFont = localStorage.getItem("fontFamily");
+    if (storedFont) {
+      const el = document.getElementById("fontSelect");
+      if (el) { el.textContent = storedFont; el.dataset.value = storedFont; }
+      document.documentElement.style.setProperty("--font-family", storedFont);
+    }
 
-    // ---------- Elements ----------
-    const clockEl = document.getElementById("clock");
-    const fontSize = document.getElementById("fontSize");
-    const fontColor = document.getElementById("fontColor");
-    const bgColor = document.getElementById("bgColor");
+    updateColorDisplay();
+  });
 
-    const gearBtn = document.getElementById("gearBtn");
-    const controls = document.getElementById("controls");
-    const wrappers = Array.from(document.querySelectorAll(".custom-select-wrapper"));
+  // ---------- Controls handlers ----------
+  fontSize.addEventListener("input", e => {
+    document.documentElement.style.setProperty("--clock-size", e.target.value + "px");
+    localStorage.setItem("fontSize", e.target.value);
+  });
 
-    // ---------- Load saved prefs ----------
-    window.addEventListener("load", () => {
-      if (localStorage.getItem("fontSize")) {
-        document.documentElement.style.setProperty("--clock-size", localStorage.getItem("fontSize") + "px");
-        fontSize.value = localStorage.getItem("fontSize");
-      }
-      if (localStorage.getItem("fontColor")) {
-        document.documentElement.style.setProperty("--font-color", localStorage.getItem("fontColor"));
-        fontColor.value = localStorage.getItem("fontColor");
-      }
-      if (localStorage.getItem("bgColor")) {
-        document.documentElement.style.setProperty("--bg-color", localStorage.getItem("bgColor"));
-        bgColor.value = localStorage.getItem("bgColor");
-      }
+  fontColor.addEventListener("input", e => {
+    document.documentElement.style.setProperty("--font-color", e.target.value);
+    localStorage.setItem("fontColor", e.target.value);
+    updateColorDisplay();
+  });
 
-      // initialize display values for custom selects from localStorage (if present)
-      const storedFormat = localStorage.getItem("timeFormat");
-      if (storedFormat) {
-        const el = document.getElementById("timeFormat");
-        if (el) el.textContent = (storedFormat === "12") ? "12-hour" : "24-hour";
-        el && (el.dataset.value = storedFormat);
-      }
-      const storedZone = localStorage.getItem("timeZone");
-      if (storedZone) {
-        const el = document.getElementById("timeZone");
-        if (el) {
-          // find matching li text if available
-          const li = Array.from(document.querySelectorAll("#timeZone + .custom-options li")).find(l => l.dataset.value === storedZone);
-          if (li) el.textContent = li.textContent;
-          else el.textContent = storedZone;
-          el.dataset.value = storedZone;
-        }
-      }
-      const storedFont = localStorage.getItem("fontFamily");
-      if (storedFont) {
-        const el = document.getElementById("fontSelect");
-        if (el) { el.textContent = storedFont; el.dataset.value = storedFont; }
-        document.documentElement.style.setProperty("--font-family", storedFont);
-      }
+  bgColor.addEventListener("input", e => {
+    document.documentElement.style.setProperty("--bg-color", e.target.value);
+    localStorage.setItem("bgColor", e.target.value);
+    updateColorDisplay();
+  });
 
-      updateColorDisplay();
-    });
-
-    // ---------- Controls handlers ----------
-    fontSize.addEventListener("input", e => {
-      document.documentElement.style.setProperty("--clock-size", e.target.value + "px");
-      localStorage.setItem("fontSize", e.target.value);
-    });
-
-    fontColor.addEventListener("input", e => {
-      document.documentElement.style.setProperty("--font-color", e.target.value);
-      localStorage.setItem("fontColor", e.target.value);
-      updateColorDisplay();
-    });
-
-    bgColor.addEventListener("input", e => {
-      document.documentElement.style.setProperty("--bg-color", e.target.value);
-      localStorage.setItem("bgColor", e.target.value);
-      updateColorDisplay();
-    });
-
-    // fullscreen
-    document.getElementById("fullscreenBtn").addEventListener("click", () => {
+  // fullscreen
+  document.getElementById("fullscreenBtn").addEventListener("click", () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key.toLowerCase() === "f") {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen();
       else document.exitFullscreen();
-    });
-    document.addEventListener("keydown", e => {
-      if (e.key.toLowerCase() === "f") {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
+    }
+  });
+
+  // ---------- Auto-hide panel (pause while interacting) ----------
+  let hideTimeout;
+  let gearHideTimeout;
+
+  function pauseHideTimer() { clearTimeout(hideTimeout); }
+
+  function startHideTimer() {
+    pauseHideTimer();
+    hideTimeout = setTimeout(() => {
+      if (!controls.matches(":hover") && !wrappers.some(w => w.matches(":hover"))) {
+        hideControls();
       }
-    });
+    }, 5000);
 
-    // ---------- Auto-hide panel (pause while interacting) ----------
-    let hideTimeout;
-    function pauseHideTimer() { clearTimeout(hideTimeout); }
-    function startHideTimer() {
-      pauseHideTimer();
-      hideTimeout = setTimeout(() => {
-        // only hide if user is not hovering/touching the controls or any open dropdown
-        if (!controls.matches(":hover") && !Array.from(document.querySelectorAll(".custom-select-wrapper")).some(w => w.matches(":hover"))) {
-          hideControls();
+    clearTimeout(gearHideTimeout);
+    gearHideTimeout = setTimeout(() => {
+      if (controls.classList.contains("hidden")) {
+        gearBtn.classList.add("hidden");
+      }
+    }, 10000);
+  }
+
+  function showControls() {
+    controls.classList.remove("hidden");
+    gearBtn.classList.remove("hidden");
+    const ic = gearBtn.querySelector(".icon"); 
+    if (ic) ic.textContent = "✖";
+    pauseHideTimer();
+    startHideTimer();
+  }
+
+  function hideControls() {
+    controls.classList.add("hidden");
+    const ic = gearBtn.querySelector(".icon"); 
+    if (ic) ic.textContent = "⚙";
+    startHideTimer();
+  }
+
+  gearBtn.addEventListener("click", () => {
+    if (controls.classList.contains("hidden")) showControls();
+    else hideControls();
+  });
+
+  controls.addEventListener("mouseenter", pauseHideTimer);
+  controls.addEventListener("mouseleave", startHideTimer);
+  controls.addEventListener("touchstart", pauseHideTimer, {passive: true});
+  controls.addEventListener("touchend", startHideTimer);
+
+  // ---------- Custom dropdown behavior ----------
+  wrappers.forEach(wrapper => {
+    const select = wrapper.querySelector(".custom-select");
+    const options = wrapper.querySelector(".custom-options");
+    if (!select || !options) return;
+
+    select.addEventListener("click", e => {
+      e.stopPropagation();
+      wrappers.forEach(w => {
+        const opts = w.querySelector(".custom-options");
+        if (w !== wrapper) {
+          w.classList.remove("active");
+          opts && opts.classList.remove("open");
         }
-      }, 5000);
-    }
-    function showControls() {
-      controls.classList.remove("hidden");
-      const ic = gearBtn.querySelector(".icon"); if (ic) ic.textContent = "✖";
-      pauseHideTimer();
-      startHideTimer();
-    }
-    function hideControls() {
-      controls.classList.add("hidden");
-      const ic = gearBtn.querySelector(".icon"); if (ic) ic.textContent = "⚙";
-    }
+      });
 
-    gearBtn.addEventListener("click", () => {
-      if (controls.classList.contains("hidden")) showControls();
-      else hideControls();
+      const isActive = wrapper.classList.toggle("active");
+      options.classList.toggle("open", isActive);
+
+      if (isActive) pauseHideTimer();
+      else startHideTimer();
     });
 
-    // pause/resume when interacting with controls (mouse/touch)
-    controls.addEventListener("mouseenter", pauseHideTimer);
-    controls.addEventListener("mouseleave", startHideTimer);
-    controls.addEventListener("touchstart", pauseHideTimer, {passive: true});
-    controls.addEventListener("touchend", startHideTimer);
+    options.addEventListener("mouseenter", pauseHideTimer);
+    options.addEventListener("mouseleave", startHideTimer);
+    options.addEventListener("touchstart", pauseHideTimer, {passive: true});
+    options.addEventListener("touchend", startHideTimer);
+    select.addEventListener("touchstart", pauseHideTimer, {passive: true});
+    select.addEventListener("touchend", startHideTimer);
+  });
 
-    // ---------- Custom dropdown behavior ----------
-    wrappers.forEach(wrapper => {
-      const select = wrapper.querySelector(".custom-select");
+  document.querySelectorAll(".custom-options li").forEach(li => {
+    li.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const wrapper = this.closest(".custom-select-wrapper");
+      const display = wrapper.querySelector(".custom-select");
       const options = wrapper.querySelector(".custom-options");
 
-      // safety: if no select/options, skip
-      if (!select || !options) return;
+      display.textContent = this.textContent;
+      display.dataset.value = this.dataset.value;
 
-      // When clicking the select box
-      select.addEventListener("click", e => {
-        e.stopPropagation();
+      wrapper.classList.remove("active");
+      options.classList.remove("open");
 
-        // close other dropdowns
-        wrappers.forEach(w => {
-          const opts = w.querySelector(".custom-options");
-          if (w !== wrapper) {
-            w.classList.remove("active");
-            opts && opts.classList.remove("open");
-          }
-        });
+      if (display.id === "timeFormat") {
+        localStorage.setItem("timeFormat", this.dataset.value);
+      } else if (display.id === "timeZone") {
+        localStorage.setItem("timeZone", this.dataset.value);
+      } else if (display.id === "fontSelect") {
+        document.documentElement.style.setProperty("--font-family", this.dataset.value);
+        localStorage.setItem("fontFamily", this.dataset.value);
+      }
 
-        // toggle this one
-        const isActive = wrapper.classList.toggle("active");
-        options.classList.toggle("open", isActive);
-
-        // pause auto-hide while interacting
-        if (isActive) pauseHideTimer();
-        else startHideTimer();
-      });
-
-      // Keep panel from auto-hiding while hovering / touching the options
-      options.addEventListener("mouseenter", pauseHideTimer);
-      options.addEventListener("mouseleave", startHideTimer);
-      options.addEventListener("touchstart", pauseHideTimer, {passive: true});
-      options.addEventListener("touchend", startHideTimer);
-      select.addEventListener("touchstart", pauseHideTimer, {passive: true});
-      select.addEventListener("touchend", startHideTimer);
+      startHideTimer();
     });
+  });
 
-    // When an option is clicked
-    document.querySelectorAll(".custom-options li").forEach(li => {
-      li.addEventListener("click", function (e) {
-        e.stopPropagation();
-        const wrapper = this.closest(".custom-select-wrapper");
-        const display = wrapper.querySelector(".custom-select");
-        const options = wrapper.querySelector(".custom-options");
-
-        // set display text + data-value
-        display.textContent = this.textContent;
-        display.dataset.value = this.dataset.value;
-
-        // close dropdown (both classes for compatibility)
-        wrapper.classList.remove("active");
-        options.classList.remove("open");
-
-        // save selection
-        if (display.id === "timeFormat") {
-          localStorage.setItem("timeFormat", this.dataset.value);
-        } else if (display.id === "timeZone") {
-          localStorage.setItem("timeZone", this.dataset.value);
-        } else if (display.id === "fontSelect") {
-          document.documentElement.style.setProperty("--font-family", this.dataset.value);
-          localStorage.setItem("fontFamily", this.dataset.value);
-        }
-
-        // restart hide timer (menu may auto-hide after delay)
-        startHideTimer();
-      });
-    });
-
-    let gearHideTimeout;
-
-    function startHideTimer() {
-      pauseHideTimer();
-      hideTimeout = setTimeout(() => {
-        if (!controls.matches(":hover") && !wrappers.some(w => w.matches(":hover"))) {
-          hideControls();
-        }
-      }, 5000);
-    
-      // Start gear auto-hide timer (10s after menu closes)
+  ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
+    document.addEventListener(evt, () => {
+      gearBtn.classList.remove("hidden");
       clearTimeout(gearHideTimeout);
-      gearHideTimeout = setTimeout(() => {
-        if (controls.classList.contains("hidden")) {
-          gearBtn.classList.add("hidden");
-        }
-      }, 10000);
-    }
-    
-    function showControls() {
-      controls.classList.remove("hidden");
-      gearBtn.classList.remove("hidden"); // always visible when opening
-      const ic = gearBtn.querySelector(".icon"); 
-      if (ic) ic.textContent = "✖";
-      pauseHideTimer();
-      startHideTimer();
-    }
-    
-    function hideControls() {
-      controls.classList.add("hidden");
-      const ic = gearBtn.querySelector(".icon"); 
-      if (ic) ic.textContent = "⚙";
-      // keep gear visible for now; it will auto-hide in 10s
-      startHideTimer();
-    }
-    
-    // If user moves mouse or taps anywhere, bring gear back immediately
-    ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
-      document.addEventListener(evt, () => {
-        gearBtn.classList.remove("hidden");
-        clearTimeout(gearHideTimeout);
-        // restart timer only if menu is hidden
-        if (controls.classList.contains("hidden")) {
-          gearHideTimeout = setTimeout(() => gearBtn.classList.add("hidden"), 10000);
-        }
-      });
-    });
-
-    
-    // Close dropdowns on outside click
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".custom-select-wrapper")) {
-        wrappers.forEach(w => {
-          w.classList.remove("active");
-          const opts = w.querySelector(".custom-options");
-          opts && opts.classList.remove("open");
-        });
+      if (controls.classList.contains("hidden")) {
+        gearHideTimeout = setTimeout(() => gearBtn.classList.add("hidden"), 10000);
       }
     });
+  });
 
-    // ---------- Color swatches ----------
-    function updateColorDisplay() {
-      document.querySelectorAll(".color-picker").forEach(picker => {
-        const input = picker.querySelector("input[type=color]");
-        const display = picker.querySelector(".color-display");
-        if (!input || !display) return;
-        display.style.background = input.value;
-        display.textContent = input.value.toUpperCase();
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".custom-select-wrapper")) {
+      wrappers.forEach(w => {
+        w.classList.remove("active");
+        const opts = w.querySelector(".custom-options");
+        opts && opts.classList.remove("open");
       });
     }
-    document.querySelectorAll(".color-picker input").forEach(input => {
-      input.addEventListener("input", updateColorDisplay);
+  });
+
+  // ---------- Color swatches ----------
+  function updateColorDisplay() {
+    document.querySelectorAll(".color-picker").forEach(picker => {
+      const input = picker.querySelector("input[type=color]");
+      const display = picker.querySelector(".color-display");
+      if (!input || !display) return;
+      display.style.background = input.value;
+      display.textContent = input.value.toUpperCase();
     });
+  }
+  document.querySelectorAll(".color-picker input").forEach(input => {
+    input.addEventListener("input", updateColorDisplay);
+  });
 
-    // init color displays once
-    updateColorDisplay();
-
-    // Start initial hide timer so gear fades away after idle
-    startHideTimer();
-  })();
-  </script>
+  updateColorDisplay();
+  startHideTimer();
+})();
+</script>
 </body>
 </html>
