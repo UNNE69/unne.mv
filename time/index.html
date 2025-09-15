@@ -253,7 +253,7 @@
   let hideTimeout;
   let gearHideTimeout;
 
-  function pauseHideTimer() { clearTimeout(hideTimeout); }
+  function pauseHideTimer() { clearTimeout(hideTimeout); clearTimeout(gearHideTimeout); }
 
   function startHideTimer() {
     pauseHideTimer();
@@ -263,12 +263,11 @@
       }
     }, 5000);
 
-    clearTimeout(gearHideTimeout);
     gearHideTimeout = setTimeout(() => {
       if (controls.classList.contains("hidden")) {
         gearBtn.classList.add("hidden");
       }
-    }, 10000);
+    }, 5000); // now hides gear after 5s, not 10s
   }
 
   function showControls() {
@@ -359,7 +358,7 @@
       gearBtn.classList.remove("hidden");
       clearTimeout(gearHideTimeout);
       if (controls.classList.contains("hidden")) {
-        gearHideTimeout = setTimeout(() => gearBtn.classList.add("hidden"), 10000);
+        gearHideTimeout = setTimeout(() => gearBtn.classList.add("hidden"), 5000); // fixed to 5s
       }
     });
   });
