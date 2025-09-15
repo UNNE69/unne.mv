@@ -355,6 +355,55 @@
       });
     });
 
+    let gearHideTimeout;
+
+    function startHideTimer() {
+      pauseHideTimer();
+      hideTimeout = setTimeout(() => {
+        if (!controls.matches(":hover") && !wrappers.some(w => w.matches(":hover"))) {
+          hideControls();
+        }
+      }, 5000);
+    
+      // Start gear auto-hide timer (10s after menu closes)
+      clearTimeout(gearHideTimeout);
+      gearHideTimeout = setTimeout(() => {
+        if (controls.classList.contains("hidden")) {
+          gearBtn.classList.add("hidden");
+        }
+      }, 10000);
+    }
+    
+    function showControls() {
+      controls.classList.remove("hidden");
+      gearBtn.classList.remove("hidden"); // always visible when opening
+      const ic = gearBtn.querySelector(".icon"); 
+      if (ic) ic.textContent = "✖";
+      pauseHideTimer();
+      startHideTimer();
+    }
+    
+    function hideControls() {
+      controls.classList.add("hidden");
+      const ic = gearBtn.querySelector(".icon"); 
+      if (ic) ic.textContent = "⚙";
+      // keep gear visible for now; it will auto-hide in 10s
+      startHideTimer();
+    }
+    
+    // If user moves mouse or taps anywhere, bring gear back immediately
+    ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
+      document.addEventListener(evt, () => {
+        gearBtn.classList.remove("hidden");
+        clearTimeout(gearHideTimeout);
+        // restart timer only if menu is hidden
+        if (controls.classList.contains("hidden")) {
+          gearHideTimeout = setTimeout(() => gearBtn.classList.add("hidden"), 10000);
+        }
+      });
+    });
+
+    
     // Close dropdowns on outside click
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".custom-select-wrapper")) {
