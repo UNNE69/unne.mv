@@ -3,7 +3,7 @@
   --font-family: system-ui;
   --font-color: #ffffff;
   --bg-color: #000000;
-  --glass-bg: rgba(255,255,255,0.05);
+  --glass-bg: rgba(0,0,0,0.4);
   --glass-blur: 10px;
 }
 
