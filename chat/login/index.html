@@ -3,27 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Unite</title>
-  <link rel="stylesheet" href="/assets/css/chat_login.css">
+  <title>Login - UChat</title>
+  <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body>
   <div class="login-container">
     <div class="login-card">
-      <h1>Welcome to Unite</h1>
-      <p>Please log in to continue</p>
+      <div class="login-header">
+        <div class="logo">
+          <div class="logo-square"></div>
+        </div>
+        <h2>Sign In</h2>
+        <p>Continue with your account</p>
+      </div>
 
-      <div class="buttons">
-        <a class="login-btn google" href="/chat/auth/google">
-          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google">
-          Login with Google
+      <!-- OAuth Buttons -->
+      <div class="social-login">
+        <a class="social-btn" href="/chat/auth/google">
+          <span class="social-text">GOOGLE</span>
         </a>
+        <a class="social-btn" href="/chat/auth/facebook">
+          <span class="social-text">FACEBOOK</span>
+        </a>
+      </div>
 
-        <a class="login-btn facebook" href="/chat/auth/facebook">
-          <img src="https://www.svgrepo.com/show/349378/facebook.svg" alt="Facebook">
-          Login with Facebook
-        </a>
+      <div class="signup-link">
+        <span>New here? </span>
+        <a href="#">Create an account</a>
+      </div>
+
+      <!-- Success message -->
+      <div class="success-message" id="successMessage">
+        <div class="success-icon">✓</div>
+        <h3>Success</h3>
+        <p>Redirecting...</p>
       </div>
     </div>
   </div>
+
+  <!-- Inline JS for OAuth -->
+  <script>
+    class UChatLogin {
+        constructor() {
+            this.socialButtons = document.querySelectorAll('.social-btn');
+            this.successMessage = document.getElementById('successMessage');
+            this.init();
+        }
+
+        init() {
+            this.setupSocialButtons();
+        }
+
+        setupSocialButtons() {
+            this.socialButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const provider = button.querySelector('.social-text').textContent.toLowerCase();
+                    this.handleSocialLogin(provider, button);
+                });
+            });
+        }
+
+        async handleSocialLogin(provider, button) {
+            // Loading state
+            button.style.pointerEvents = 'none';
+            button.style.opacity = '0.7';
+
+            try {
+                console.log(`Redirecting to ${provider} OAuth...`);
+                // Redirect user to backend OAuth route
+                window.location.href = `/chat/auth/${provider}`;
+            } catch (error) {
+                console.error(`${provider} login failed`, error);
+            } finally {
+                button.style.pointerEvents = 'auto';
+                button.style.opacity = '1';
+            }
+        }
+
+        showSuccess() {
+            document.querySelector('.social-login').style.display = 'none';
+            document.querySelector('.signup-link').style.display = 'none';
+            this.successMessage.classList.add('show');
+
+            setTimeout(() => {
+                window.location.href = '/chat/profile';
+            }, 2000);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        new UChatLogin();
+    });
+  </script>
 </body>
 </html>
