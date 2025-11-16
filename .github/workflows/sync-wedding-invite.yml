@@ -2,8 +2,8 @@ name: Auto Sync Wedding Invite Repo
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # runs every 6 hours (change if needed)
-  workflow_dispatch:        # allows manual run from GitHub Actions tab
+    - cron: "0 */6 * * *"  # runs every 6 hours
+  workflow_dispatch:        # allows manual run
 
 jobs:
   sync:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout destination repo (unne.mv)
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}  # Use your PAT here
           fetch-depth: 0
 
       - name: Configure Git
@@ -29,5 +29,5 @@ jobs:
             main \
             --squash
 
-      - name: Push changes
+      - name: Push changes back to unne.mv
         run: git push
