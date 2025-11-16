@@ -1,0 +1,33 @@
+name: Auto Sync Wedding Invite Repo
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # runs every 6 hours (change if needed)
+  workflow_dispatch:        # allows manual run from GitHub Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout destination repo (unne.mv)
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Pull updates from wedding invite repo into /wedding_invite
+        run: |
+          git subtree pull \
+            --prefix=wedding_invite \
+            https://github.com/UNNE69/wedding-invite-31-12-2025 \
+            main \
+            --squash
+
+      - name: Push changes
+        run: git push
