@@ -2,15 +2,15 @@ name: Auto Sync Wedding Invite Repo
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
-  workflow_dispatch:
+    - cron: "0 */6 * * *"  # every 6 hours
+  workflow_dispatch:        # allows manual run
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout destination repo (unne.mv)
+      - name: Checkout destination repo
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT }}  # Make sure PAT exists in repo secrets
@@ -23,11 +23,15 @@ jobs:
 
       - name: Pull updates from wedding invite repo into /wedding_invite
         run: |
-          git subtree pull \
-            --prefix=wedding_invite \
-            https://github.com/UNNE69/wedding-invite-31-12-2025 \
-            main \
-            --squash
+          # Add the remote for the source repo if it doesn't exist
+          git remote add wedding-invite https://github.com/UNNE69/wedding-invite-31-12-2025 || true
+          
+          # Fetch latest changes
+          git fetch wedding-invite main
+          
+          # Merge into subtree (mirrors deletions and updates)
+          git subtree merge --prefix=wedding_invite wedding-invite/main --squash || \
+          git subtree add --prefix=wedding_invite wedding-invite/main --squash
 
       - name: Push changes back to unne.mv
         run: git push
