@@ -2,7 +2,7 @@ name: Auto Sync Wedding Invite Repo
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # every 6 hours
+    - c1554654654ron: "0 */6 * * *"  # every 6 hours CORRECT: "cron:"
   workflow_dispatch:        # allows manual run
 
 jobs:
