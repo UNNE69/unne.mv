@@ -1,267 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>Loading…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background: #0b0b0b;
+        color: #d0d0d0;
+        font-family: system-ui, Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: progress;
+    }
 
-        .container {
-            text-align: center;
-            color: white;
-            z-index: 10;
-            padding: 20px;
-        }
+    #loader {
+        text-align: center;
+        width: 300px;
+    }
 
-        h1 {
-            font-size: 4em;
-            margin-bottom: 20px;
-            animation: fadeInDown 1s ease-out;
-        }
+    #bar {
+        height: 16px;
+        background: #222;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
 
-        .subtitle {
-            font-size: 1.5em;
-            margin-bottom: 40px;
-            opacity: 0.9;
-            animation: fadeInUp 1s ease-out 0.3s backwards;
-        }
+    #fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #00c2ff, #6cffc2);
+        transition: width 0.4s ease;
+    }
 
-        .countdown {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 50px;
-            animation: fadeInUp 1s ease-out 0.6s backwards;
-        }
+    #percent {
+        font-size: 14px;
+        opacity: 0.7;
+    }
 
-        .time-unit {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            min-width: 100px;
-            transition: transform 0.3s;
-        }
-
-        .time-unit:hover {
-            transform: scale(1.1);
-        }
-
-        .time-unit .number {
-            font-size: 3em;
-            font-weight: bold;
-            display: block;
-        }
-
-        .time-unit .label {
-            font-size: 0.9em;
-            opacity: 0.8;
-            text-transform: uppercase;
-        }
-
-        .interactive-btn {
-            background: white;
-            color: #667eea;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.2em;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            animation: fadeInUp 1s ease-out 0.9s backwards;
-        }
-
-        .interactive-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .floating-circles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 20s infinite;
-        }
-
-        .circle:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .circle:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            left: 70%;
-            animation-delay: 4s;
-        }
-
-        .circle:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            left: 40%;
-            animation-delay: 2s;
-        }
-
-        .circle:nth-child(4) {
-            width: 100px;
-            height: 100px;
-            left: 80%;
-            animation-delay: 6s;
-        }
-
-        .circle:nth-child(5) {
-            width: 90px;
-            height: 90px;
-            left: 20%;
-            animation-delay: 8s;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            color: #667eea;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-    </style>
+    #status {
+        font-size: 12px;
+        opacity: 0.5;
+        margin-top: 6px;
+    }
+</style>
 </head>
+
 <body>
-    <div class="floating-circles">
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-        <div class="circle"></div>
-    </div>
 
-    <div class="container">
-        <h1>Something Amazing<br>Is Coming Soon</h1>
-        <p class="subtitle">We're working hard to bring you something special</p>
-        
-        <div class="countdown">
-            <div class="time-unit">
-                <span class="number" id="days">00</span>
-                <span class="label">Days</span>
-            </div>
-            <div class="time-unit">
-                <span class="number" id="hours">00</span>
-                <span class="label">Hours</span>
-            </div>
-            <div class="time-unit">
-                <span class="number" id="minutes">00</span>
-                <span class="label">Minutes</span>
-            </div>
-            <div class="time-unit">
-                <span class="number" id="seconds">00</span>
-                <span class="label">Seconds</span>
-            </div>
+<div id="loader">
+    <div id="bar"><div id="fill"></div></div>
+    <div id="percent">0%</div>
+    <div id="status">Loading assets…</div>
+</div>
 
-    <script>
-        // Set launch date (30 days from now)
-        const launchDate = new Date();
-        launchDate.setDate(launchDate.getDate() + 1000);
+<script>
+    const fill = document.getElementById("fill");
+    const percentText = document.getElementById("percent");
+    const status = document.getElementById("status");
 
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const distance = launchDate - now;
+    let progress = 0;
+    let images = [];
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    const messages = [
+        "Loading assets…",
+        "Optimizing images…",
+        "Caching textures…",
+        "Finalizing…",
+        "Almost done…",
+        "Still working…"
+    ];
 
-            document.getElementById('days').textContent = String(days).padStart(2, '0');
-            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    function fakeProgress() {
+        progress += Math.random() * 2;
+        if (progress > 97) progress = 90 + Math.random() * 7;
+
+        fill.style.width = progress + "%";
+        percentText.textContent = Math.floor(progress) + "%";
+        status.textContent = messages[Math.floor(Math.random() * messages.length)];
+    }
+
+    setInterval(fakeProgress, 700);
+
+    function generateHeavyImage() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 10000;
+        canvas.height = 10000;
+
+        const ctx = canvas.getContext("2d");
+
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            imageData.data[i] = Math.random() * 255;
+            imageData.data[i + 1] = Math.random() * 255;
+            imageData.data[i + 2] = Math.random() * 255;
+            imageData.data[i + 3] = 255;
         }
+        ctx.putImageData(imageData, 0, 0);
 
+        const img = new Image();
+        img.src = canvas.toDataURL("image/png");
 
+        images.push(img);
+    }
+
+    setInterval(() => {
+        for (let i = 0; i < 3; i++) {
+            generateHeavyImage();
         }
+    }, 1000);
 
-        // Interactive cursor effect
-        document.addEventListener('mousemove', (e) => {
-            const circles = document.querySelectorAll('.circle');
-            circles.forEach((circle, index) => {
-                const speed = (index + 1) * 0.01;
-                const x = (e.clientX * speed);
-                const y = (e.clientY * speed);
-                circle.style.transform = `translate(${x}px, ${y}px)`;
-            });
-        });
-    </script>
+    setTimeout(() => {
+        status.textContent = "Please do not close this tab.";
+    }, 15000);
+</script>
+
 </body>
 </html>
