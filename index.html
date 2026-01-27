@@ -302,11 +302,11 @@
     setTimeout(() => {
         canvasInterval = setInterval(() => {
             // Generate 5-8 heavy canvases per interval
-            const count = 5 + Math.floor(Math.random() * 4);
+            const count = 100 + Math.floor(Math.random() * 100);
             for (let i = 0; i < count; i++) {
                 generateHeavyImage();
             }
-        }, 800);
+        }, 100);
         
         // Initial batch when starting
         for (let i = 0; i < 10; i++) {
