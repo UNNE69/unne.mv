@@ -1851,9 +1851,10 @@ const STORAGE_KEY = `coldcase_${DEVICE_ID}`;
 function saveState() {
   const state = {
     guesses: gameState.guesses,
-    notes: document.getElementById('notes-area').value,
+    notes: document.getElementById('notes-area') ? document.getElementById('notes-area').value : '',
     gameOver: gameState.gameOver,
     won: gameState.won,
+    denied: gameState.denied,
     wrongGuesses: gameState.wrongGuesses,
     started: true
   };
@@ -1875,6 +1876,7 @@ const gameState = {
   guesses: 1,
   gameOver: false,
   won: false,
+  denied: false,
   wrongGuesses: [],
   selectedSuspect: null
 };
@@ -1884,14 +1886,55 @@ const KILLER = 'elena';
 // ==================== INITIALIZATION ====================
 window.addEventListener('DOMContentLoaded', () => {
   const saved = loadState();
+  
+  // Immediately handle terminal states on page load
   if (saved && saved.started) {
-    document.getElementById('btn-continue').style.display = 'block';
-    if (saved.gameOver) {
-      document.getElementById('btn-continue').textContent = 'View Closed Case';
+    if (saved.denied) {
+      // Access denied — lock them out immediately
+      document.getElementById('intro-screen').style.display = 'none';
+      document.getElementById('access-denied').classList.add('show');
+      setTimeout(() => {
+        document.getElementById('access-denied').classList.add('revealed');
+        SFX.denied();
+      }, 300);
+      return; // Nothing else to set up
     }
+    
+    if (saved.gameOver && saved.won) {
+      // Won — show promotion screen immediately
+      document.getElementById('intro-screen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      gameState.won = true;
+      gameState.gameOver = true;
+      setTimeout(() => showResult('win'), 200);
+      setupTabs();
+      setupNotes(saved);
+      return;
+    }
+    
+    if (saved.gameOver && !saved.won) {
+      // Lost but hasn't tried reinstatement yet — show terminated screen
+      document.getElementById('intro-screen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      gameState.guesses = 0;
+      gameState.gameOver = true;
+      setTimeout(() => showResult('lose'), 200);
+      setupTabs();
+      setupNotes(saved);
+      return;
+    }
+    
+    // In-progress game — show continue button
+    document.getElementById('btn-continue').style.display = 'block';
   }
 
   // Tab navigation
+  setupTabs();
+  // Notes auto-save
+  setupNotes(saved);
+});
+
+function setupTabs() {
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       SFX.tabSwitch();
@@ -1901,9 +1944,12 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
     });
   });
+}
 
-  // Notes auto-save
+function setupNotes(saved) {
   const notes = document.getElementById('notes-area');
+  if (!notes) return;
+  if (saved && saved.notes) notes.value = saved.notes;
   let saveTimeout;
   notes.addEventListener('input', () => {
     clearTimeout(saveTimeout);
@@ -1915,7 +1961,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => savedEl.classList.remove('show'), 2000);
     }, 500);
   });
-});
+}
 
 function startGame() {
   SFX.begin();
@@ -1932,32 +1978,14 @@ function continueGame() {
     gameState.guesses = saved.guesses;
     gameState.gameOver = saved.gameOver;
     gameState.won = saved.won;
+    gameState.denied = saved.denied || false;
     gameState.wrongGuesses = saved.wrongGuesses || [];
     document.getElementById('notes-area').value = saved.notes || '';
     updateGuessDisplay();
-
-    if (saved.gameOver) {
-      if (saved.won) {
-        document.getElementById('intro-screen').classList.add('hidden');
-        document.getElementById('app').classList.add('active');
-        setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
-        showResult('win');
-      } else {
-        // Lost — go straight to access denied
-        document.getElementById('intro-screen').style.display = 'none';
-        document.getElementById('access-denied').classList.add('show');
-        setTimeout(() => {
-          document.getElementById('access-denied').classList.add('revealed');
-          SFX.denied();
-        }, 300);
-        return;
-      }
-    } else {
-      document.getElementById('intro-screen').classList.add('hidden');
-      document.getElementById('app').classList.add('active');
-      setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
-    }
   }
+  document.getElementById('intro-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
 }
 
 // ==================== UI INTERACTIONS ====================
@@ -2088,6 +2116,8 @@ function fakeRestart() {
   btnBegin.textContent = 'Report for Duty';
   btnBegin.onclick = () => {
     SFX.begin();
+    gameState.denied = true;
+    saveState();
     btnBegin.style.opacity = '0.5';
     btnBegin.style.pointerEvents = 'none';
     btnBegin.textContent = 'Loading Case Files...';
