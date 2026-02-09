@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>COLD CASE — Detective Bureau</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a0c;
+  --bg-secondary: #111116;
+  --bg-card: #16161d;
+  --bg-card-hover: #1c1c25;
+  --border: #2a2a35;
+  --border-active: #c2382d;
+  --red: #c2382d;
+  --red-dim: #8b1a12;
+  --red-glow: rgba(194,56,45,0.3);
+  --amber: #d4a04a;
+  --amber-dim: rgba(212,160,74,0.15);
+  --green: #2d8f5e;
+  --text-primary: #e8e6e1;
+  --text-secondary: #8a8894;
+  --text-dim: #55535e;
+  --evidence-blue: #3a7bd5;
+  --evidence-yellow: #d4a04a;
+  --evidence-red: #c2382d;
+  --evidence-green: #2d8f5e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ==================== INTRO SCREEN ==================== */
+#intro-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+#intro-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.02); }
+
+.intro-badge {
+  width: 60px; height: 60px;
+  border: 2px solid var(--red);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.5rem;
+  animation: pulse-ring 2s infinite;
+}
+.intro-badge svg { width: 28px; height: 28px; stroke: var(--red); fill: none; stroke-width: 1.5; }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 var(--red-glow); }
+  50% { box-shadow: 0 0 0 12px transparent; }
+}
+
+.intro-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 8vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-align: center;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.intro-title span { color: var(--red); }
+
+.intro-case-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.intro-briefing {
+  max-width: 420px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.intro-warning {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(194,56,45,0.08);
+  border: 1px solid rgba(194,56,45,0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--red);
+  letter-spacing: 0.05em;
+  margin-bottom: 2.5rem;
+  text-transform: uppercase;
+}
+
+.btn-begin {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 1rem 3rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-begin:hover { background: #d4423a; transform: translateY(-1px); box-shadow: 0 8px 30px var(--red-glow); }
+.btn-begin:active { transform: translateY(0); }
+
+.btn-continue {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  padding: 0.75rem 2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s;
+}
+.btn-continue:hover { background: var(--amber-dim); }
+
+/* ==================== MAIN APP ==================== */
+#app {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+#app.active { display: flex; }
+
+/* Top bar */
+.top-bar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,12,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.top-bar-left {
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.top-bar-badge {
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--red);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.top-bar-badge svg { width: 14px; height: 14px; stroke: var(--red); fill: none; stroke-width: 1.5; }
+.top-bar-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.top-bar-title span { color: var(--red); }
+
+.guesses-left {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--red);
+  letter-spacing: 0.05em;
+  background: rgba(194,56,45,0.08);
+  border: 1px solid rgba(194,56,45,0.15);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* Navigation */
+.nav-tabs {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0 0.5rem;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  flex-shrink: 0;
+  padding: 0.85rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+.nav-tab.active { color: var(--text-primary); }
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 1rem; right: 1rem;
+  height: 2px;
+  background: var(--red);
+  border-radius: 2px 2px 0 0;
+}
+.nav-tab .tab-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: var(--amber);
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.nav-tab .tab-dot.visible { opacity: 1; }
+
+/* Content area */
+.content { flex: 1; padding: 1rem; padding-bottom: 2rem; }
+
+.tab-panel { display: none; animation: fadeIn 0.3s ease; }
+.tab-panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ==================== CASE OVERVIEW TAB ==================== */
+.victim-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.victim-header {
+  background: linear-gradient(135deg, rgba(194,56,45,0.12), rgba(194,56,45,0.03));
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 1rem; align-items: center;
+}
+
+.victim-photo {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--red-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  position: relative;
+}
+.victim-photo::after {
+  content: 'DECEASED';
+  position: absolute;
+  bottom: -6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.1em;
+  background: var(--red);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.victim-info h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+.victim-info .victim-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.victim-info .victim-meta span {
+  color: var(--text-dim);
+  margin: 0 0.3rem;
+}
+
+.victim-details {
+  padding: 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.detail-item {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.detail-item.full { grid-column: 1 / -1; }
+.detail-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+}
+.detail-value {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.section-header {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 1.5rem 0 0.75rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.timeline-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-left: 2rem;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 1.3rem;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.timeline-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+}
+.timeline-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+/* ==================== SUSPECTS TAB ==================== */
+.suspect-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.suspect-card:hover { border-color: var(--border-active); background: var(--bg-card-hover); }
+.suspect-card.expanded { border-color: rgba(194,56,45,0.3); }
+
+.suspect-header-row {
+  padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 0.85rem;
+}
+
+.suspect-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.suspect-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.1rem;
+}
+.suspect-relation {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.suspect-tag {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.tag-high { background: rgba(194,56,45,0.12); color: var(--red); border: 1px solid rgba(194,56,45,0.2); }
+.tag-med { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(212,160,74,0.2); }
+.tag-low { background: rgba(45,143,94,0.1); color: var(--green); border: 1px solid rgba(45,143,94,0.2); }
+
+.suspect-details {
+  display: none;
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
+.suspect-card.expanded .suspect-details { display: block; padding-top: 1rem; }
+
+.suspect-detail-section { margin-bottom: 1rem; }
+.suspect-detail-section:last-child { margin-bottom: 0; }
+.suspect-detail-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.suspect-detail-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.suspect-chevron {
+  margin-left: 0.5rem;
+  transition: transform 0.3s;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+.suspect-card.expanded .suspect-chevron { transform: rotate(180deg); }
+
+/* ==================== EVIDENCE TAB ==================== */
+.evidence-filter-bar {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 1rem;
+  padding-bottom: 0.25rem;
+}
+.evidence-filter-bar::-webkit-scrollbar { display: none; }
+
+.filter-chip {
+  flex-shrink: 0;
+  padding: 0.5rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.filter-chip.active {
+  background: rgba(194,56,45,0.1);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.evidence-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.evidence-card:hover { border-color: #3a3a45; }
+.evidence-card.expanded { border-color: rgba(194,56,45,0.2); }
+
+.evidence-header {
+  padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+
+.evidence-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+.evidence-icon.autopsy { background: rgba(194,56,45,0.12); }
+.evidence-icon.text { background: rgba(58,123,213,0.12); }
+.evidence-icon.social { background: rgba(140,80,200,0.12); }
+.evidence-icon.witness { background: rgba(212,160,74,0.12); }
+.evidence-icon.forensic { background: rgba(45,143,94,0.12); }
+
+.evidence-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.evidence-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+}
+
+.evidence-body {
+  display: none;
+  padding: 0 1.25rem 1.25rem;
+}
+.evidence-card.expanded .evidence-body { display: block; }
+
+.evidence-content {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.text-msg {
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+  max-width: 85%;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.text-msg.sent {
+  background: rgba(58,123,213,0.15);
+  border: 1px solid rgba(58,123,213,0.15);
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+.text-msg.received {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.text-msg .msg-sender {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.05em;
+}
+.text-msg .msg-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+  text-align: right;
+}
+
+.report-line {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.82rem;
+}
+.report-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  min-width: 100px;
+  letter-spacing: 0.03em;
+  padding-top: 0.1rem;
+  text-transform: uppercase;
+}
+.report-value {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.report-highlight {
+  color: var(--red);
+  font-weight: 500;
+}
+
+.social-post {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.social-post-header {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.social-post-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+}
+.social-post-name { font-size: 0.78rem; font-weight: 600; }
+.social-post-handle { font-size: 0.68rem; color: var(--text-dim); }
+.social-post-text { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+.social-post-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+}
+
+/* ==================== NOTES TAB ==================== */
+.notes-area {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.notes-area:focus { border-color: var(--red); }
+.notes-area::placeholder { color: var(--text-dim); }
+
+.notes-saved {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--green);
+  margin-top: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.notes-saved.show { opacity: 1; }
+
+.note-prompts {
+  margin-top: 1.25rem;
+}
+.note-prompt {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.note-prompt strong {
+  color: var(--amber);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+/* ==================== ACCUSATION TAB ==================== */
+.accusation-panel {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.accusation-warning {
+  background: rgba(194,56,45,0.06);
+  border: 1px solid rgba(194,56,45,0.15);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.accusation-warning h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.accusation-warning p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.suspect-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.suspect-select-btn {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+.suspect-select-btn:hover { border-color: var(--red); background: var(--bg-card-hover); }
+.suspect-select-btn.selected { border-color: var(--red); background: rgba(194,56,45,0.08); }
+.suspect-select-btn .sel-avatar {
+  font-size: 1.8rem;
+  margin-bottom: 0.4rem;
+}
+.suspect-select-btn .sel-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-bottom: 0.15rem;
+}
+.suspect-select-btn .sel-relation {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.btn-accuse {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 1rem 2.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.btn-accuse.ready { opacity: 1; pointer-events: auto; }
+.btn-accuse.ready:hover { background: #d4423a; box-shadow: 0 8px 30px var(--red-glow); }
+
+/* Result overlay */
+#result-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(10,10,12,0.95);
+  backdrop-filter: blur(20px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+#result-overlay.show { display: flex; }
+
+.result-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.result-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+.result-title.win { color: var(--green); }
+.result-title.lose { color: var(--red); }
+.result-title.wrong { color: var(--amber); }
+
+.result-text {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 400px;
+  margin-bottom: 2rem;
+}
+
+.btn-reset {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-reset:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+/* ==================== EVIDENCE FOUND INDICATORS ==================== */
+.evidence-new {
+  width: 6px; height: 6px;
+  background: var(--red);
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ==================== GAME OVER STATE ==================== */
+.game-over .btn-accuse { display: none; }
+.game-over .suspect-select-grid { opacity: 0.4; pointer-events: none; }
+
+/* Responsive */
+@media (min-width: 600px) {
+  .content { padding: 1.5rem; max-width: 640px; margin: 0 auto; }
+  .suspect-select-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* ==================== ACCESS DENIED SCREEN ==================== */
+#access-denied {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+#access-denied.show { display: flex; }
+
+#access-denied .ad-content {
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+#access-denied.revealed .ad-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ad-scanline {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,0,0,0.015) 2px,
+    rgba(255,0,0,0.015) 4px
+  );
+  pointer-events: none;
+  animation: scanline-drift 8s linear infinite;
+}
+@keyframes scanline-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+.ad-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  animation: ad-pulse 2s ease-in-out infinite;
+}
+@keyframes ad-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ad-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.8rem, 7vw, 3rem);
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 0 30px var(--red-glow), 0 0 60px rgba(194,56,45,0.15);
+  animation: ad-glitch 4s ease-in-out infinite;
+}
+@keyframes ad-glitch {
+  0%, 92%, 100% { transform: none; opacity: 1; }
+  93% { transform: translateX(-4px) skewX(-2deg); opacity: 0.8; }
+  94% { transform: translateX(4px) skewX(2deg); opacity: 0.6; }
+  95% { transform: translateX(-2px); opacity: 0.9; }
+  96% { transform: none; opacity: 1; }
+}
+
+.ad-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #3a1510;
+  letter-spacing: 0.15em;
+  margin-bottom: 2rem;
+}
+
+.ad-message {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #441a14;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+}
+
+.ad-cursor {
+  margin-top: 2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--red);
+  animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== INTRO SCREEN ==================== -->
+<div id="intro-screen">
+  <div class="intro-badge">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </div>
+  <div class="intro-title">COLD <span>CASE</span></div>
+  <div class="intro-case-number">Case File #2024-0847</div>
+  <div class="intro-briefing">
+    A tech CEO was found dead in his penthouse apartment. Foul play is suspected. You've been assigned as lead detective. Examine the evidence, study the suspects, and identify the killer.
+  </div>
+  <div class="intro-warning">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    You have 1 guess — choose wisely
+  </div>
+  <button class="btn-begin" id="btn-begin" onclick="startGame()">Accept Case</button>
+  <button class="btn-continue" id="btn-continue" style="display:none" onclick="continueGame()">Continue Investigation</button>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="app">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="top-bar-badge">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="top-bar-title">COLD <span>CASE</span></div>
+    </div>
+    <div class="guesses-left" id="guesses-display">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="guesses-text">1 GUESS LEFT</span>
+    </div>
+  </div>
+
+  <div class="nav-tabs" id="nav-tabs">
+    <button class="nav-tab active" data-tab="overview">Case<span class="tab-dot"></span></button>
+    <button class="nav-tab" data-tab="suspects">Suspects<span class="tab-dot"></span></button>
+    <button class="nav-tab" data-tab="evidence">Evidence<span class="tab-dot"></span></button>
+    <button class="nav-tab" data-tab="notes">Notes<span class="tab-dot"></span></button>
+    <button class="nav-tab" data-tab="accusation">Accuse<span class="tab-dot"></span></button>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== OVERVIEW TAB ===== -->
+    <div class="tab-panel active" id="panel-overview">
+      <div class="victim-card">
+        <div class="victim-header">
+          <div class="victim-photo">👤</div>
+          <div class="victim-info">
+            <h2>Marcus Chen</h2>
+            <div class="victim-meta">34 years old <span>•</span> CEO, NovaTech Inc.</div>
+          </div>
+        </div>
+        <div class="victim-details">
+          <div class="detail-item">
+            <div class="detail-label">Status</div>
+            <div class="detail-value" style="color:var(--red);">Deceased</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Date Found</div>
+            <div class="detail-value">Nov 14, 2024</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Location</div>
+            <div class="detail-value">Penthouse, The Meridian Tower</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Cause of Death</div>
+            <div class="detail-value" style="color:var(--amber);">Pending Investigation</div>
+          </div>
+          <div class="detail-item full">
+            <div class="detail-label">Background</div>
+            <div class="detail-value">Co-founded NovaTech in 2019 with Elena Vasquez. The company, a cybersecurity startup, was valued at $280M and preparing for an IPO. Known for his charismatic public persona but increasingly erratic private behavior in recent months. Recently ended a relationship with Sophie Laurent and had a falling out with his brother David over their late parents' estate.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">Last Known Timeline</div>
+
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 13 — 6:30 PM</div>
+        <div class="timeline-text">Left NovaTech office. Security cameras confirm departure.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 13 — 7:15 PM</div>
+        <div class="timeline-text">Arrived at penthouse. Doorman confirms entry alone.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 13 — 8:02 PM</div>
+        <div class="timeline-text">Last text message sent from his phone (to Elena Vasquez: "We need to talk about the restructuring. Tonight.").</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 13 — 8:40 PM</div>
+        <div class="timeline-text">Building security camera captures a figure entering via the parking garage — face not visible, wearing a dark coat. Matches the build of multiple suspects.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 13 — ~9:00–10:00 PM</div>
+        <div class="timeline-text">Estimated window of death based on autopsy findings.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-time">Nov 14 — 8:15 AM</div>
+        <div class="timeline-text">Body discovered by Nina Park (assistant) who arrived for a scheduled morning briefing. She called 911 at 8:17 AM.</div>
+      </div>
+    </div>
+
+    <!-- ===== SUSPECTS TAB ===== -->
+    <div class="tab-panel" id="panel-suspects">
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">👩‍💻</div>
+          <div>
+            <div class="suspect-name">Elena Vasquez</div>
+            <div class="suspect-relation">Co-Founder & CTO, NovaTech</div>
+          </div>
+
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 32. Holds a PhD in Chemical Engineering from MIT before pivoting to cybersecurity. Co-founded NovaTech with Marcus in 2019. Brilliant but reserved. Recently discovered that Marcus had been in private talks with the board to restructure her equity stake before the IPO, effectively reducing her shares by 60%.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">Business partner of 5 years. Their relationship had become increasingly strained. Multiple employees reported heated arguments in the weeks before Marcus's death. Elena felt she was being pushed out of the company she helped build.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Claims she was on a conference call with investors in Singapore from 7:30 PM to 10:00 PM. Call logs confirm the call existed, but it ended at 8:25 PM — not 10:00 PM as she stated. Her apartment is a 12-minute drive from Marcus's building.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">👨‍💼</div>
+          <div>
+            <div class="suspect-name">David Chen</div>
+            <div class="suspect-relation">Victim's Older Brother</div>
+          </div>
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 38. Real estate agent. Married with two kids. Has been in a bitter dispute with Marcus over their parents' estate — a property portfolio worth $1.8M. Marcus, as executor, had been delaying the distribution for over a year.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">Estranged brother. They hadn't spoken in 3 months except through lawyers. David publicly accused Marcus of "hoarding" their parents' legacy at a family gathering in September.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Says he was home with his wife and children all evening. Wife confirms, but she admits she went to bed at 9:00 PM and doesn't know if David stayed home after that. The drive from David's house to the Meridian Tower is 25 minutes.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">👩</div>
+          <div>
+            <div class="suspect-name">Sophie Laurent</div>
+            <div class="suspect-relation">Ex-Girlfriend</div>
+          </div>
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 29. Interior designer. Dated Marcus for 2 years. The relationship ended badly in October when Sophie discovered Marcus had been seeing someone else. She confronted him publicly at a restaurant, causing a scene that was captured by onlookers and posted online.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">Bitter ex. Friends say Sophie was "devastated and furious" after the breakup. She told multiple people she felt "used and discarded." Still had a key to Marcus's penthouse that she claims she returned — Marcus's building management has no record of it being deactivated.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Claims she was at a friend's apartment for dinner. The friend, Mia Torres, confirms Sophie was there from 6:00 PM to 8:15 PM. After that, Sophie says she went home and watched a movie alone. No corroboration for her whereabouts after 8:15 PM.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">🧔</div>
+          <div>
+            <div class="suspect-name">Ray Hoffman</div>
+            <div class="suspect-relation">Lead Investor, Hoffman Capital</div>
+          </div>
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 45. Venture capitalist. Invested $18M into NovaTech's Series B. Has a reputation as aggressive and ruthless. Recently learned that Marcus had been inflating growth metrics presented to investors — a potential securities fraud issue that could tank the IPO and Hoffman's investment.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">Investor with a board seat. Relationship went from mentor-mentee to adversarial after discovering the inflated metrics. Colleagues say Hoffman was "incandescent with rage" and threatened legal action.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Says he was at a charity gala at the Four Seasons from 7:00 PM until midnight. Multiple witnesses and photos confirm his attendance. However, the gala was 8 minutes from Marcus's building, and there is a 45-minute gap (8:15–9:00 PM) where no one specifically remembers seeing him.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">👩‍🦰</div>
+          <div>
+            <div class="suspect-name">Nina Park</div>
+            <div class="suspect-relation">Personal Assistant</div>
+          </div>
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 27. Marcus's personal assistant for 3 years. Extremely organized, loyal, and discreet. Found the body and called 911. Colleagues describe her as "devoted" to Marcus, though some suggest her attachment went beyond professional.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">PA with access to all his personal and professional affairs. Knew his schedule, contacts, passwords, and secrets. Some coworkers believe Nina had unrequited feelings for Marcus and was hurt when he never reciprocated.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Says she was at home all evening reviewing Marcus's schedule for the next day. Phone location data confirms her phone was at her apartment. However, she could have left the phone behind.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="suspect-card" onclick="toggleSuspect(this)">
+        <div class="suspect-header-row">
+          <div class="suspect-avatar">😎</div>
+          <div>
+            <div class="suspect-name">Tyler Brooks</div>
+            <div class="suspect-relation">Best Friend (College)</div>
+          </div>
+          <span class="suspect-chevron">▾</span>
+        </div>
+        <div class="suspect-details">
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Background</div>
+            <div class="suspect-detail-text">Age 31. Freelance photographer. Known Marcus since their Stanford days. Served as best man when Marcus was briefly engaged in 2021. Lifestyle funded partly by Marcus's generosity — Marcus paid for Tyler's studio lease and had given him a $80K "loan" that was never repaid.</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Relationship to Victim</div>
+            <div class="suspect-detail-text">Closest friend, but the dynamic had shifted. Tyler resented living in Marcus's shadow and felt patronized by the financial help. In a private journal entry (found by police), Tyler wrote: "Everything he gives me comes with invisible strings."</div>
+          </div>
+          <div class="suspect-detail-section">
+            <div class="suspect-detail-label">Alibi</div>
+            <div class="suspect-detail-text">Says he was at his photography studio editing until midnight. Studio building has no security cameras. His assistant left at 6 PM and cannot confirm Tyler's presence after that.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EVIDENCE TAB ===== -->
+    <div class="tab-panel" id="panel-evidence">
+      <div class="evidence-filter-bar">
+        <button class="filter-chip active" data-filter="all" onclick="filterEvidence('all', this)">All</button>
+        <button class="filter-chip" data-filter="autopsy" onclick="filterEvidence('autopsy', this)">Autopsy</button>
+        <button class="filter-chip" data-filter="text" onclick="filterEvidence('text', this)">Messages</button>
+        <button class="filter-chip" data-filter="social" onclick="filterEvidence('social', this)">Social</button>
+        <button class="filter-chip" data-filter="witness" onclick="filterEvidence('witness', this)">Witness</button>
+        <button class="filter-chip" data-filter="forensic" onclick="filterEvidence('forensic', this)">Forensic</button>
+      </div>
+
+      <!-- AUTOPSY REPORT -->
+      <div class="evidence-card" data-category="autopsy" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon autopsy">🔬</div>
+          <div>
+            <div class="evidence-title">Autopsy Report</div>
+            <div class="evidence-subtitle">City Medical Examiner — Dr. R. Whitfield</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            <div class="report-line"><div class="report-label">Subject</div><div class="report-value">Marcus Chen, Male, 34</div></div>
+            <div class="report-line"><div class="report-label">Cause</div><div class="report-value"><span class="report-highlight">Ethylene glycol poisoning (antifreeze)</span>. Lethal concentration found in blood (350 mg/dL). Metabolic acidosis and renal failure consistent with ingestion 2-4 hours prior to death.</div></div>
+            <div class="report-line"><div class="report-label">Manner</div><div class="report-value"><span class="report-highlight">Homicide</span>. The substance was administered in a beverage. Victim was unlikely aware — ethylene glycol is colorless, odorless, and has a sweet taste easily masked by alcohol.</div></div>
+            <div class="report-line"><div class="report-label">Est. Time</div><div class="report-value">Between 9:00 PM and 10:00 PM, Nov 13</div></div>
+            <div class="report-line"><div class="report-label">Scene Notes</div><div class="report-value">Two cocktail glasses found on the living room table. One contained traces of ethylene glycol mixed with whiskey sour ingredients. The other glass was clean — <span class="report-highlight">wiped of all fingerprints</span>. A bottle of Maker's Mark (half empty) was on the counter.</div></div>
+            <div class="report-line"><div class="report-label">Body Marks</div><div class="report-value">No defensive wounds. No signs of struggle. Victim appeared to have collapsed on the sofa. This suggests he trusted his killer and did not suspect the drink was tampered with.</div></div>
+            <div class="report-line"><div class="report-label">Toxicology</div><div class="report-value">Blood alcohol level 0.06%. Ethylene glycol 350 mg/dL. No other drugs detected.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEXT MESSAGES -->
+      <div class="evidence-card" data-category="text" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon text">💬</div>
+          <div>
+            <div class="evidence-title">Text Messages — Elena Vasquez</div>
+            <div class="evidence-subtitle">Extracted from victim's phone</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content" style="background:transparent; padding: 0;">
+            <div class="text-msg received"><div class="msg-sender">Elena → Marcus</div>I just found out about the board meeting. You're trying to restructure my equity? After everything?<div class="msg-time">Nov 10, 3:14 PM</div></div>
+            <div class="text-msg sent"><div class="msg-sender">Marcus → Elena</div>It's a business decision. The investors want changes before the IPO. It's not personal.<div class="msg-time">Nov 10, 3:22 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Elena → Marcus</div>Not personal? I BUILT the security architecture. Without me there IS no product. You know that.<div class="msg-time">Nov 10, 3:23 PM</div></div>
+            <div class="text-msg sent"><div class="msg-sender">Marcus → Elena</div>We can discuss this calmly. Let's not do this over text.<div class="msg-time">Nov 10, 3:30 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Elena → Marcus</div>You've been planning this behind my back for months. I trusted you.<div class="msg-time">Nov 10, 3:31 PM</div></div>
+            <div style="text-align:center;padding:0.5rem;font-size:0.7rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;">— 3 days later —</div>
+            <div class="text-msg sent"><div class="msg-sender">Marcus → Elena</div>We need to talk about the restructuring. Tonight.<div class="msg-time">Nov 13, 8:02 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Elena → Marcus</div>I'm on a call with the Singapore team. Can it wait?<div class="msg-time">Nov 13, 8:04 PM</div></div>
+            <div class="text-msg sent"><div class="msg-sender">Marcus → Elena</div>No. Come over when you're done. We settle this tonight.<div class="msg-time">Nov 13, 8:05 PM</div></div>
+            <div style="text-align:center;padding:0.5rem;font-size:0.7rem;color:var(--red);font-family:'JetBrains Mono',monospace;">— No further messages —</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="text" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon text">💬</div>
+          <div>
+            <div class="evidence-title">Text Messages — Sophie Laurent</div>
+            <div class="evidence-subtitle">47 messages in 2 weeks — excerpts</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content" style="background:transparent; padding: 0;">
+            <div class="text-msg received"><div class="msg-sender">Sophie → Marcus</div>I can't believe you're already seeing someone else. Was any of it real?<div class="msg-time">Oct 29, 11:42 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Sophie → Marcus</div>Answer me, Marcus.<div class="msg-time">Oct 29, 11:58 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Sophie → Marcus</div>Fine. Ignore me. That's what you do best.<div class="msg-time">Oct 30, 12:15 AM</div></div>
+            <div style="text-align:center;padding:0.5rem;font-size:0.7rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;">— several days later —</div>
+            <div class="text-msg received"><div class="msg-sender">Sophie → Marcus</div>I still have your apartment key. I should come get my things.<div class="msg-time">Nov 8, 2:17 PM</div></div>
+            <div class="text-msg sent"><div class="msg-sender">Marcus → Sophie</div>Leave the key with the doorman. I'll have Nina box up your things.<div class="msg-time">Nov 8, 6:40 PM</div></div>
+            <div class="text-msg received"><div class="msg-sender">Sophie → Marcus</div>You'll regret what you did to me.<div class="msg-time">Nov 11, 9:33 PM</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOCIAL MEDIA -->
+      <div class="evidence-card" data-category="social" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon social">📱</div>
+          <div>
+            <div class="evidence-title">Social Media Activity</div>
+            <div class="evidence-subtitle">Instagram & Twitter — various accounts</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content" style="background:transparent; padding: 0;">
+            <div class="social-post">
+              <div class="social-post-header">
+                <div class="social-post-avatar">👩</div>
+                <div><span class="social-post-name">Sophie Laurent</span> <span class="social-post-handle">@sophdesigns</span></div>
+              </div>
+              <div class="social-post-text">Some people are so good at wearing masks. You think you know someone... 🖤</div>
+              <div class="social-post-time">Nov 12, 8:47 PM — Instagram Story</div>
+            </div>
+            <div class="social-post">
+              <div class="social-post-header">
+                <div class="social-post-avatar">😎</div>
+                <div><span class="social-post-name">Tyler Brooks</span> <span class="social-post-handle">@tylerbrooksphoto</span></div>
+              </div>
+              <div class="social-post-text">Late night at the studio. Some of my best work happens when I'm angry. New series coming soon. 📷</div>
+              <div class="social-post-time">Nov 13, 11:22 PM — Instagram</div>
+            </div>
+            <div class="social-post">
+              <div class="social-post-header">
+                <div class="social-post-avatar">👩‍💻</div>
+                <div><span class="social-post-name">Elena Vasquez</span> <span class="social-post-handle">@elenavasq_tech</span></div>
+              </div>
+              <div class="social-post-text">The hardest part of building something is watching someone try to take it from you. Anyway, back to code. 💻</div>
+              <div class="social-post-time">Nov 11, 6:15 PM — Twitter</div>
+            </div>
+            <div class="social-post">
+              <div class="social-post-header">
+                <div class="social-post-avatar">🧔</div>
+                <div><span class="social-post-name">Ray Hoffman</span> <span class="social-post-handle">@hoffmancapital</span></div>
+              </div>
+              <div class="social-post-text">Great evening at the Children's Hospital Foundation gala. Proud to support this cause. #GivingBack</div>
+              <div class="social-post-time">Nov 13, 7:45 PM — Twitter (with photo at Four Seasons)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WITNESS STATEMENTS -->
+      <div class="evidence-card" data-category="witness" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon witness">👁️</div>
+          <div>
+            <div class="evidence-title">Witness: Building Doorman</div>
+            <div class="evidence-subtitle">James Okoro — Meridian Tower lobby staff</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            "Mr. Chen came home around 7:15, seemed normal, maybe a little tense. He didn't have anyone with him. I went on my break at 8:30 and came back at 9:15. During my break, the side entrance and parking garage aren't monitored — anyone with a key fob could get in without being logged. I didn't see anyone else come through the lobby that evening."
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="witness" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon witness">👁️</div>
+          <div>
+            <div class="evidence-title">Witness: Nina Park (Assistant)</div>
+            <div class="evidence-subtitle">Statement to police — Nov 14</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            "Three days before he died, I was outside Marcus's office when Elena came in. They were screaming at each other. Elena said something like: <span style="color:var(--red);font-weight:500;">'I swear I will end this, Marcus. You are not cutting me out.'</span> Marcus told her to calm down. She slammed the door on the way out. I'd never seen her that angry. I told the police because I think it's important. Also — Marcus had been stressed for weeks. He told me he was 'making changes people wouldn't like.' He didn't say more than that."
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="witness" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon witness">👁️</div>
+          <div>
+            <div class="evidence-title">Witness: Mia Torres</div>
+            <div class="evidence-subtitle">Sophie Laurent's friend</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            "Sophie was at my place for dinner on the 13th. She arrived around 6 and left at 8:15. She was upset about Marcus, like she always is lately. She'd been drinking wine and was talking about how he 'ruined her life.' I tried to calm her down. She said she was going straight home. I texted her at 10 PM and she replied around 10:30, said she was in bed watching Netflix. She seemed sad, not dangerous."
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="witness" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon witness">👁️</div>
+          <div>
+            <div class="evidence-title">Witness: Garage Security Camera</div>
+            <div class="evidence-subtitle">Digital footage analysis — CCTV Unit</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            Security footage from the Meridian Tower parking garage at 8:40 PM shows a figure entering via the B2 level. The individual is wearing <span style="color:var(--amber);font-weight:500;">a dark wool overcoat</span> and appears to know the layout — they avoid the main camera angle and use the service elevator. Build is consistent with a woman of average height or a slim-built man. The face is not captured. The same figure exits at approximately 9:50 PM via the same route. <span style="color:var(--red);font-weight:500;">The figure is carrying nothing upon entry but is wearing gloves.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORENSIC -->
+      <div class="evidence-card" data-category="forensic" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon forensic">🧪</div>
+          <div>
+            <div class="evidence-title">Forensic: Fingerprint Analysis</div>
+            <div class="evidence-subtitle">Crime Lab Report #4782</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            <div class="report-line"><div class="report-label">Glass #1</div><div class="report-value">Marcus Chen's fingerprints (victim). Contained ethylene glycol + whiskey.</div></div>
+            <div class="report-line"><div class="report-label">Glass #2</div><div class="report-value"><span class="report-highlight">Wiped clean. No fingerprints recovered.</span> Contained trace amounts of whiskey only — no poison. Whoever drank from this glass cleaned it afterward.</div></div>
+            <div class="report-line"><div class="report-label">Bottle</div><div class="report-value">Marcus's prints on the Maker's Mark bottle. One additional partial print — <span class="report-highlight">insufficient for identification</span>.</div></div>
+            <div class="report-line"><div class="report-label">Apartment</div><div class="report-value">Multiple prints throughout — matched to Marcus, Nina Park (expected, she had regular access), and Sophie Laurent (from prior visits). No prints from Elena Vasquez, David Chen, Ray Hoffman, or Tyler Brooks found in the apartment.</div></div>
+            <div class="report-line"><div class="report-label">Key Finding</div><div class="report-value"><span class="report-highlight">A single dark wool fiber was recovered from the sofa near where Marcus was found.</span> Fiber analysis is consistent with a high-end cashmere-wool blend overcoat. Not matched to any clothing owned by the victim.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="forensic" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon forensic">🧪</div>
+          <div>
+            <div class="evidence-title">Forensic: Digital & Access Logs</div>
+            <div class="evidence-subtitle">Meridian Tower security systems</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            <div class="report-line"><div class="report-label">Lobby</div><div class="report-value">Marcus Chen entered at 7:15 PM. No other visitors logged through the front desk that evening.</div></div>
+            <div class="report-line"><div class="report-label">Garage</div><div class="report-value">Key fob access at B2 level at 8:38 PM. Fob ID traced to a <span class="report-highlight">guest pass registered to NovaTech corporate account</span>. Elena Vasquez, as CTO, had signing authority over NovaTech corporate accounts including building access for client meetings.</div></div>
+            <div class="report-line"><div class="report-label">Elevator</div><div class="report-value">Service elevator called from B2 to Penthouse at 8:41 PM. Called back down at 9:48 PM.</div></div>
+            <div class="report-line"><div class="report-label">Elena's Bldg</div><div class="report-value"><span class="report-highlight">Elena's personal parking card was NOT logged at her own apartment building between 8:30 PM and 11:15 PM.</span> She claims she stayed home after the conference call.</div></div>
+            <div class="report-line"><div class="report-label">Conference Call</div><div class="report-value">VoIP logs confirm call with Singapore team started at 7:30 PM and <span class="report-highlight">ended at 8:25 PM — not 10:00 PM</span> as Elena stated.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-card" data-category="forensic" onclick="toggleEvidence(this)">
+        <div class="evidence-header">
+          <div class="evidence-icon forensic">🧪</div>
+          <div>
+            <div class="evidence-title">Forensic: Ethylene Glycol Source</div>
+            <div class="evidence-subtitle">Poison trace analysis</div>
+          </div>
+        </div>
+        <div class="evidence-body">
+          <div class="evidence-content">
+            <div class="report-line"><div class="report-label">Substance</div><div class="report-value">Ethylene glycol (common antifreeze). Lethal dose for an adult is approximately 100mL. Estimated 120-150mL was added to the victim's cocktail.</div></div>
+            <div class="report-line"><div class="report-label">Properties</div><div class="report-value">Colorless, odorless, sweet-tasting liquid. Easily masked in a sweet cocktail. <span class="report-highlight">Requires knowledge that the substance is both toxic and undetectable in flavored drinks.</span></div></div>
+            <div class="report-line"><div class="report-label">Availability</div><div class="report-value">Available commercially at any auto parts store. No purchase records found tied to any suspect. However, NovaTech's office building maintenance stores antifreeze for the building's HVAC system on the basement level. <span class="report-highlight">Access to the maintenance room requires a NovaTech executive key card.</span></div></div>
+            <div class="report-line"><div class="report-label">Key Note</div><div class="report-value">The poisoning method suggests premeditation and <span class="report-highlight">specific chemistry knowledge</span> — the killer knew the exact dosage to be lethal and chose a delivery method that wouldn't arouse suspicion.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== NOTES TAB ===== -->
+    <div class="tab-panel" id="panel-notes">
+      <div class="section-header">Detective's Notebook</div>
+      <textarea class="notes-area" id="notes-area" placeholder="Write your observations, connections, and theories here...&#10;&#10;Who had motive? Who had opportunity? Who had the means?&#10;&#10;Your notes are saved automatically."></textarea>
+      <div class="notes-saved" id="notes-saved">✓ Notes saved</div>
+
+      <div class="note-prompts">
+        <div class="section-header">Key Questions to Consider</div>
+        <div class="note-prompt"><strong>MOTIVE:</strong> Who stood to gain the most from Marcus's death? Who had the strongest emotional reason?</div>
+        <div class="note-prompt"><strong>MEANS:</strong> The poison required specific knowledge. Who would know how to use ethylene glycol as an undetectable weapon?</div>
+        <div class="note-prompt"><strong>OPPORTUNITY:</strong> The murder happened between ~8:40 PM and 9:50 PM. Who can't account for their time during this window?</div>
+        <div class="note-prompt"><strong>ACCESS:</strong> The killer entered through the parking garage with a specific key fob. Who had access to it?</div>
+        <div class="note-prompt"><strong>PHYSICAL EVIDENCE:</strong> A dark wool fiber was found. A glass was wiped clean. The killer wore gloves. What does this tell you?</div>
+      </div>
+    </div>
+
+    <!-- ===== ACCUSATION TAB ===== -->
+    <div class="tab-panel" id="panel-accusation">
+      <div class="accusation-panel" id="accusation-panel">
+        <div class="accusation-warning">
+          <h3>Make Your Accusation</h3>
+          <p>You have <strong id="accuse-guesses-count">1</strong> guess. Select a suspect and present your case. There are no second chances — get it wrong and the case goes cold forever.</p>
+        </div>
+
+        <div class="section-header">Select Suspect</div>
+
+        <div class="suspect-select-grid" id="suspect-grid">
+          <button class="suspect-select-btn" data-suspect="elena" onclick="selectSuspect(this)">
+            <div class="sel-avatar">👩‍💻</div>
+            <div class="sel-name">Elena Vasquez</div>
+            <div class="sel-relation">CTO / Co-Founder</div>
+          </button>
+          <button class="suspect-select-btn" data-suspect="david" onclick="selectSuspect(this)">
+            <div class="sel-avatar">👨‍💼</div>
+            <div class="sel-name">David Chen</div>
+            <div class="sel-relation">Victim's Brother</div>
+          </button>
+          <button class="suspect-select-btn" data-suspect="sophie" onclick="selectSuspect(this)">
+            <div class="sel-avatar">👩</div>
+            <div class="sel-name">Sophie Laurent</div>
+            <div class="sel-relation">Ex-Girlfriend</div>
+          </button>
+          <button class="suspect-select-btn" data-suspect="ray" onclick="selectSuspect(this)">
+            <div class="sel-avatar">🧔</div>
+            <div class="sel-name">Ray Hoffman</div>
+            <div class="sel-relation">Lead Investor</div>
+          </button>
+          <button class="suspect-select-btn" data-suspect="nina" onclick="selectSuspect(this)">
+            <div class="sel-avatar">👩‍🦰</div>
+            <div class="sel-name">Nina Park</div>
+            <div class="sel-relation">Personal Assistant</div>
+          </button>
+          <button class="suspect-select-btn" data-suspect="tyler" onclick="selectSuspect(this)">
+            <div class="sel-avatar">😎</div>
+            <div class="sel-name">Tyler Brooks</div>
+            <div class="sel-relation">Best Friend</div>
+          </button>
+        </div>
+
+        <button class="btn-accuse" id="btn-accuse" onclick="makeAccusation()">Submit Accusation</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Result Overlay -->
+<div id="result-overlay">
+  <div class="result-icon" id="result-icon"></div>
+  <div class="result-title" id="result-title"></div>
+  <div class="result-text" id="result-text"></div>
+  <button class="btn-reset" onclick="resetGame()">Start New Investigation</button>
+</div>
+
+<!-- Access Denied Screen -->
+<div id="access-denied">
+  <div class="ad-scanline"></div>
+  <div class="ad-content">
+    <div class="ad-icon">⛔</div>
+    <div class="ad-title">ACCESS DENIED</div>
+    <div class="ad-code">ERROR 0x7E4F — CREDENTIALS REVOKED</div>
+    <div class="ad-message">Your clearance has been permanently revoked.<br>This terminal is now locked.</div>
+    <div class="ad-cursor">█</div>
+  </div>
+</div>
+
+<script>
+// ==================== SOUND ENGINE ====================
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+const SFX = {
+  // Low rumble click for UI taps
+  tap() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(90, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.12);
+  },
+
+  // Subtle dark whoosh for tab switches
+  tabSwitch() {
+    const ctx = getAudio();
+    const bufferSize = ctx.sampleRate * 0.15;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.15);
+    filter.Q.value = 1.5;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    source.connect(filter).connect(gain).connect(ctx.destination);
+    source.start(); source.stop(ctx.currentTime + 0.15);
+  },
+
+  // Eerie expand sound for cards
+  expand() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc2.type = 'sine';
+    osc.frequency.setValueAtTime(180, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.25);
+    osc2.frequency.setValueAtTime(183, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(283, ctx.currentTime + 0.25);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc2.connect(gain);
+    osc.start(); osc2.start();
+    osc.stop(ctx.currentTime + 0.3); osc2.stop(ctx.currentTime + 0.3);
+  },
+
+  // Muted thud for collapse
+  collapse() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.1);
+  },
+
+  // Dark selection tone
+  select() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc2.type = 'sine';
+    osc.frequency.setValueAtTime(220, ctx.currentTime);
+    osc2.frequency.setValueAtTime(330, ctx.currentTime);
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.setValueAtTime(0.06, ctx.currentTime + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc2.connect(gain);
+    osc.start(); osc2.start();
+    osc.stop(ctx.currentTime + 0.35); osc2.stop(ctx.currentTime + 0.35);
+  },
+
+  // Ominous deep drone for Accept Case / beginning
+  begin() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const osc3 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc2.type = 'sine';
+    osc3.type = 'sawtooth';
+    osc.frequency.setValueAtTime(55, ctx.currentTime);
+    osc2.frequency.setValueAtTime(82.5, ctx.currentTime);
+    osc3.frequency.setValueAtTime(55, ctx.currentTime);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.4);
+    gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 1.8);
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 300;
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc2.connect(filter);
+    const gain3 = ctx.createGain();
+    gain3.gain.value = 0.15;
+    osc3.connect(gain3).connect(filter);
+    osc.start(); osc2.start(); osc3.start();
+    osc.stop(ctx.currentTime + 1.8); osc2.stop(ctx.currentTime + 1.8); osc3.stop(ctx.currentTime + 1.8);
+  },
+
+  // Accusation submit — tension hit
+  accuse() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc2.type = 'sine';
+    osc.frequency.setValueAtTime(65, ctx.currentTime);
+    osc2.frequency.setValueAtTime(65, ctx.currentTime);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(500, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 1.2);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.6);
+    gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 1.2);
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc2.connect(filter);
+    osc.start(); osc2.start();
+    osc.stop(ctx.currentTime + 1.2); osc2.stop(ctx.currentTime + 1.2);
+  },
+
+  // Win — resolved, warm minor chord rising
+  win() {
+    const ctx = getAudio();
+    const notes = [220, 261.6, 329.6, 440];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.15;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.05, start + 0.1);
+      gain.gain.linearRampToValueAtTime(0.03, start + 0.8);
+      gain.gain.linearRampToValueAtTime(0.0, start + 2.0);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 2.0);
+    });
+  },
+
+  // Lose — dark descending dissonance
+  lose() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const osc3 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc2.type = 'sine';
+    osc3.type = 'sine';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + 2.5);
+    osc2.frequency.setValueAtTime(152, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(36, ctx.currentTime + 2.5);
+    osc3.frequency.setValueAtTime(185, ctx.currentTime);
+    osc3.frequency.exponentialRampToValueAtTime(44, ctx.currentTime + 2.5);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 2.5);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.2);
+    gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1.5);
+    gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 2.5);
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc2.connect(filter);
+    osc3.connect(filter);
+    osc.start(); osc2.start(); osc3.start();
+    osc.stop(ctx.currentTime + 2.5); osc2.stop(ctx.currentTime + 2.5); osc3.stop(ctx.currentTime + 2.5);
+  },
+
+  // Access denied — harsh static burst + low alarm
+  denied() {
+    const ctx = getAudio();
+    // Static burst
+    const bufferSize = ctx.sampleRate * 0.3;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 0.5);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.06, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'bandpass';
+    nFilter.frequency.value = 2000;
+    nFilter.Q.value = 0.5;
+    noise.connect(nFilter).connect(noiseGain).connect(ctx.destination);
+    noise.start(); noise.stop(ctx.currentTime + 0.3);
+
+    // Low alarm tone
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(80, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime + 0.6);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime + 0.8);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime + 1.1);
+    const aFilter = ctx.createBiquadFilter();
+    aFilter.type = 'lowpass';
+    aFilter.frequency.value = 200;
+    osc.connect(aFilter).connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + 0.3);
+    osc.stop(ctx.currentTime + 1.2);
+  },
+
+  // Fake restart — hopeful then crushed
+  fakeHope() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(330, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(350, ctx.currentTime + 1.5);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 3.0);
+    gain.gain.setValueAtTime(0.0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.5);
+    gain.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 1.5);
+    gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 3.0);
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 3.0);
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 3.0);
+  },
+
+  // Notes save confirmation — tiny blip
+  save() {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 600;
+    gain.gain.setValueAtTime(0.03, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.08);
+  }
+};
+function generateFingerprint() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('fingerprint', 2, 2);
+  const canvasData = canvas.toDataURL();
+
+  const screen = `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}`;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const language = navigator.language;
+  const platform = navigator.platform || 'unknown';
+  const ua = navigator.userAgent;
+
+  const raw = canvasData + screen + timezone + language + platform + ua;
+
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return 'cc_' + Math.abs(hash).toString(36);
+}
+
+const DEVICE_ID = generateFingerprint();
+const STORAGE_KEY = `coldcase_${DEVICE_ID}`;
+
+function saveState() {
+  const state = {
+    guesses: gameState.guesses,
+    notes: document.getElementById('notes-area').value,
+    gameOver: gameState.gameOver,
+    won: gameState.won,
+    wrongGuesses: gameState.wrongGuesses,
+    started: true
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) return JSON.parse(data);
+  } catch(e) {}
+  return null;
+}
+
+// ==================== GAME STATE ====================
+const gameState = {
+  guesses: 1,
+  gameOver: false,
+  won: false,
+  wrongGuesses: [],
+  selectedSuspect: null
+};
+
+const KILLER = 'elena';
+
+// ==================== INITIALIZATION ====================
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = loadState();
+  if (saved && saved.started) {
+    document.getElementById('btn-continue').style.display = 'block';
+    if (saved.gameOver) {
+      document.getElementById('btn-continue').textContent = 'View Closed Case';
+    }
+  }
+
+  // Tab navigation
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      SFX.tabSwitch();
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+
+  // Notes auto-save
+  const notes = document.getElementById('notes-area');
+  let saveTimeout;
+  notes.addEventListener('input', () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      saveState();
+      SFX.save();
+      const savedEl = document.getElementById('notes-saved');
+      savedEl.classList.add('show');
+      setTimeout(() => savedEl.classList.remove('show'), 2000);
+    }, 500);
+  });
+});
+
+function startGame() {
+  SFX.begin();
+  document.getElementById('intro-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
+  saveState();
+}
+
+function continueGame() {
+  SFX.begin();
+  const saved = loadState();
+  if (saved) {
+    gameState.guesses = saved.guesses;
+    gameState.gameOver = saved.gameOver;
+    gameState.won = saved.won;
+    gameState.wrongGuesses = saved.wrongGuesses || [];
+    document.getElementById('notes-area').value = saved.notes || '';
+    updateGuessDisplay();
+
+    if (saved.gameOver) {
+      if (saved.won) {
+        document.getElementById('intro-screen').classList.add('hidden');
+        document.getElementById('app').classList.add('active');
+        setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
+        showResult('win');
+      } else {
+        // Lost — go straight to access denied
+        document.getElementById('intro-screen').style.display = 'none';
+        document.getElementById('access-denied').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('access-denied').classList.add('revealed');
+          SFX.denied();
+        }, 300);
+        return;
+      }
+    } else {
+      document.getElementById('intro-screen').classList.add('hidden');
+      document.getElementById('app').classList.add('active');
+      setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 800);
+    }
+  }
+}
+
+// ==================== UI INTERACTIONS ====================
+function toggleSuspect(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.suspect-card').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) { card.classList.add('expanded'); SFX.expand(); } else { SFX.collapse(); }
+}
+
+function toggleEvidence(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.evidence-card').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) { card.classList.add('expanded'); SFX.expand(); } else { SFX.collapse(); }
+}
+
+function filterEvidence(filter, btn) {
+  SFX.tap();
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.evidence-card').forEach(card => {
+    if (filter === 'all' || card.dataset.category === filter) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function selectSuspect(btn) {
+  if (gameState.gameOver) return;
+  SFX.select();
+  document.querySelectorAll('.suspect-select-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  gameState.selectedSuspect = btn.dataset.suspect;
+  document.getElementById('btn-accuse').classList.add('ready');
+}
+
+function updateGuessDisplay() {
+  document.getElementById('guesses-text').textContent = `${gameState.guesses} GUESS${gameState.guesses !== 1 ? 'ES' : ''} LEFT`;
+  document.getElementById('accuse-guesses-count').textContent = gameState.guesses;
+
+  // Disable already-guessed suspects
+  gameState.wrongGuesses.forEach(s => {
+    const btn = document.querySelector(`.suspect-select-btn[data-suspect="${s}"]`);
+    if (btn) {
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+      btn.innerHTML += '<div style="font-size:0.6rem;color:var(--red);margin-top:0.3rem;font-family:JetBrains Mono,monospace;">CLEARED</div>';
+    }
+  });
+}
+
+function makeAccusation() {
+  if (!gameState.selectedSuspect || gameState.gameOver) return;
+  SFX.accuse();
+
+  if (gameState.selectedSuspect === KILLER) {
+    gameState.won = true;
+    gameState.gameOver = true;
+    saveState();
+    showResult('win');
+  } else {
+    gameState.guesses = 0;
+    gameState.gameOver = true;
+    saveState();
+    showResult('lose');
+  }
+}
+
+function showResult(type) {
+  const overlay = document.getElementById('result-overlay');
+  const icon = document.getElementById('result-icon');
+  const title = document.getElementById('result-title');
+  const text = document.getElementById('result-text');
+
+  title.className = 'result-title';
+
+  if (type === 'win') {
+    icon.textContent = '⭐';
+    title.textContent = 'PROMOTED';
+    title.classList.add('win');
+    text.innerHTML = `<div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:#2d8f5e;margin-bottom:1.2rem;opacity:0.7;">Bureau of Criminal Investigation</div><strong style="font-size:1.05rem;">You have been promoted to<br>Senior Chief Detective</strong><br><br><span style="color:#8a8894;font-size:0.82rem;">Elena Vasquez has been arrested and charged with the first-degree murder of Marcus Chen. Your meticulous analysis of the evidence led to a swift and decisive conviction.</span><br><br><div style="border-top:1px solid #2a2a35;padding-top:1rem;margin-top:0.5rem;font-family:'Playfair Display',serif;font-size:1.15rem;color:#e8e6e1;line-height:1.6;font-style:italic;">"Never wrong.<br>Even until the last case."</div>`;
+    
+    // Change reset button for win - hide it, the end is the end
+    const resetBtn = overlay.querySelector('.btn-reset');
+    resetBtn.style.display = 'none';
+  } else if (type === 'lose') {
+    icon.textContent = '🚫';
+    title.textContent = 'TERMINATED';
+    title.classList.add('lose');
+    text.innerHTML = `<strong>INTERNAL AFFAIRS NOTICE</strong><br><br>Due to your wrongful accusation of an innocent civilian, your detective credentials have been permanently revoked.<br><br>Your badge and case files have been confiscated. You are hereby <strong>terminated from the Bureau, effective immediately.</strong><br><br>The truth dies with your career.`;
+
+    const resetBtn = overlay.querySelector('.btn-reset');
+    resetBtn.textContent = 'Request Reinstatement';
+    resetBtn.onclick = () => fakeRestart();
+  }
+
+  overlay.classList.add('show');
+
+  // Play result sounds with slight delay for impact
+  if (type === 'win') { setTimeout(() => SFX.win(), 300); }
+  if (type === 'lose') { setTimeout(() => SFX.lose(), 300); }
+}
+
+function fakeRestart() {
+  const overlay = document.getElementById('result-overlay');
+  overlay.classList.remove('show');
+
+  // Show fake loading state
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('intro-screen').style.display = 'flex';
+  document.getElementById('intro-screen').classList.remove('hidden');
+
+  // Change intro to look like a fresh start
+  const introTitle = document.querySelector('.intro-title');
+  const introSubtitle = document.querySelector('.intro-case-number');
+  const introBriefing = document.querySelector('.intro-briefing');
+  const introWarning = document.querySelector('.intro-warning');
+  const btnBegin = document.getElementById('btn-begin');
+  const btnContinue = document.getElementById('btn-continue');
+
+  introTitle.innerHTML = 'NEW <span>CASE</span>';
+  introSubtitle.textContent = 'Case File #2024-1203 — Reassignment';
+  introBriefing.textContent = 'Reinstatement approved. A new case has been assigned to your desk. Report to the briefing room.';
+  introWarning.style.display = 'none';
+  btnContinue.style.display = 'none';
+  btnBegin.textContent = 'Report for Duty';
+  btnBegin.onclick = () => {
+    SFX.begin();
+    btnBegin.style.opacity = '0.5';
+    btnBegin.style.pointerEvents = 'none';
+    btnBegin.textContent = 'Loading Case Files...';
+
+    // After 3 seconds — blackout with fading hope sound
+    setTimeout(() => {
+      SFX.fakeHope();
+      document.getElementById('intro-screen').style.transition = 'opacity 1.5s ease';
+      document.getElementById('intro-screen').style.opacity = '0';
+
+      setTimeout(() => {
+        document.getElementById('intro-screen').style.display = 'none';
+        document.getElementById('access-denied').classList.add('show');
+        SFX.denied();
+
+        setTimeout(() => {
+          document.getElementById('access-denied').classList.add('revealed');
+        }, 500);
+      }, 1500);
+    }, 3000);
+  };
+}
+
+function resetGame() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  location.reload();
+}
+</script>
+</body>
+</html>
