@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<title>Fentenoy Trial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0a0a0f;font-family:'DM Sans',sans-serif;color:#e2e8f0}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+input,textarea{font-family:'DM Sans',sans-serif;outline:none}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;outline:none}
+#game{width:100%;height:100%;max-width:430px;margin:0 auto;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .6s}
+.scene.active{opacity:1;pointer-events:all}
+#scene-load .loader{animation:pulse 1.5s infinite;color:#0ea5e9;font-size:13px;letter-spacing:3px;font-family:'JetBrains Mono',monospace}
+#scene-title{background:radial-gradient(ellipse at 30% 20%,rgba(14,165,233,.08),transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(220,38,38,.06),transparent 50%),#0a0a0f}
+#scene-title::before{content:'';position:absolute;inset:0;opacity:.03;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 4px)}
+.title-sub{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:6px;color:#475569;text-transform:uppercase;margin-bottom:24px;z-index:1}
+.title-main{font-family:'Playfair Display',serif;font-size:clamp(42px,10vw,64px);font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;background:linear-gradient(135deg,#e2e8f0,#0ea5e9 50%,#e2e8f0);background-size:200% 200%;animation:gradShift 4s ease infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;z-index:1}
+.title-loc{font-family:'JetBrains Mono',monospace;font-size:11px;color:#334155;letter-spacing:2px;margin-bottom:48px;z-index:1}
+.title-btns{display:flex;flex-direction:column;align-items:center;gap:12px;z-index:1}
+.title-fp{font-family:'JetBrains Mono',monospace;font-size:11px;color:#1e293b;margin-top:16px;z-index:1}
+.btn-start{padding:16px 48px;font-size:15px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid #0ea5e9!important;color:#0ea5e9;border-radius:2px;font-weight:600;transition:.2s}
+.btn-start:active{background:rgba(14,165,233,.15)}
+.btn-continue{padding:10px 32px;font-size:13px;background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid #334155!important;border-radius:8px;font-weight:600}
+.btn-primary{padding:14px 40px;border-radius:10px;background:#0ea5e9;color:#fff;font-size:14px;font-weight:600;transition:.2s}
+.btn-primary:active{transform:scale(.96)}
+.btn-ghost{padding:12px 24px;border-radius:10px;background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid #334155!important;font-size:13px;font-weight:600}
+#scene-intro{padding:32px}
+#scene-intro::before{content:'';position:absolute;inset:0;opacity:.02;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.05) 2px,rgba(255,255,255,.05) 4px)}
+#intro-lines{max-width:500px;width:100%;min-height:300px;display:flex;flex-direction:column;justify-content:center;z-index:1}
+.intro-line{margin-bottom:12px;line-height:1.6;opacity:0;transition:opacity .8s,color .8s}
+.intro-line.visible{opacity:1;color:#e2e8f0}
+.intro-line.past{opacity:.35;color:#475569}
+.intro-line.big{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:16px}
+#intro-counter{position:absolute;bottom:40px;font-size:12px;color:#334155;font-family:'JetBrains Mono',monospace}
+#scene-phone{background:#111118;justify-content:flex-start;align-items:stretch}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;font-size:12px;color:#94a3b8;background:rgba(0,0,0,.3);flex-shrink:0;z-index:50}
+.phone-label{font-size:10px;padding:2px 8px;border-radius:4px}
+.phone-label.yours{background:rgba(14,165,233,.2);color:#0ea5e9}
+.phone-label.pres{background:rgba(220,38,38,.2);color:#f87171}
+.phone-tabs{display:flex;margin:8px 16px;background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #1e293b;flex-shrink:0}
+.phone-tabs button{flex:1;padding:10px 0;background:transparent;color:#475569;font-size:12px;font-weight:600;font-family:inherit;transition:.2s;border:none}
+.phone-tabs button.sel-yours{background:rgba(14,165,233,.15);color:#0ea5e9}
+.phone-tabs button.sel-pres{background:rgba(220,38,38,.15);color:#f87171}
+.phone-tabs button:disabled{opacity:.3;cursor:not-allowed}
+.phone-body{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;display:flex;flex-direction:column}
+.home-header{text-align:center;padding:24px 20px 0}
+.home-header .clock{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin-bottom:4px}
+.home-header .date{font-size:12px;color:#64748b}
+.app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 20px}
+.app-icon{width:100%;aspect-ratio:1;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:10px;gap:4px;cursor:pointer;transition:.15s;background:rgba(255,255,255,.04);position:relative;color:#94a3b8}
+.app-icon:active{transform:scale(.92)}
+.app-icon .ico{font-size:24px}
+.app-badge{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:9px;background:#dc2626;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.objective-box{margin:24px 20px 16px;padding:16px;background:rgba(14,165,233,.05);border-radius:12px;border:1px solid #1e293b}
+.objective-box .lbl{font-size:11px;color:#0ea5e9;font-weight:600;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.objective-box .txt{font-size:13px;color:#94a3b8;line-height:1.5}
+.app-hdr{padding:12px 16px;display:flex;align-items:center;gap:12px;background:rgba(17,17,24,.98);border-bottom:1px solid #1e293b;flex-shrink:0;position:sticky;top:0;z-index:10}
+.back-btn{background:transparent;border:none;color:#0ea5e9;font-size:20px;cursor:pointer;padding:4px}
+.chat-row{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #1e293b;cursor:pointer;transition:.2s}
+.chat-row:active{background:rgba(255,255,255,.02)}
+.avatar{width:44px;height:44px;border-radius:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.avatar-sm{width:36px;height:36px;border-radius:18px;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.msg-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px}
+.bubble{max-width:80%;padding:10px 14px;font-size:14px;line-height:1.5;margin-bottom:4px;animation:slideUp .3s;word-wrap:break-word}
+.bubble.sent{align-self:flex-end;background:#1d4ed8;border-radius:16px 16px 4px 16px;color:#e2e8f0}
+.bubble.recv{align-self:flex-start;background:#1e293b;border-radius:16px 16px 16px 4px;color:#e2e8f0}
+.bubble .ts{font-size:10px;color:rgba(255,255,255,.35);margin-top:4px;display:block}
+.typing{align-self:flex-start;background:#1e293b;border-radius:16px;padding:10px 18px;animation:slideUp .3s}
+.choices{display:flex;gap:8px;padding:12px;border-top:1px solid #1e293b;flex-shrink:0;flex-direction:column}
+.choice-btn{padding:12px 16px;border-radius:10px;background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid #334155!important;font-size:13px;font-weight:500;text-align:left;line-height:1.4;transition:.2s;font-family:inherit}
+.choice-btn:active{background:rgba(14,165,233,.1);color:#0ea5e9;border-color:#0ea5e9!important}
+.puzzle-box{padding:12px;border-top:1px solid #1e293b;flex-shrink:0}
+.puzzle-label{font-size:11px;color:#64748b;margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+.puzzle-row{display:flex;gap:8px}
+.puzzle-input{flex:1;padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:13px}
+.puzzle-go{padding:10px 16px;border-radius:8px;background:#0ea5e9;color:#fff;font-weight:600;font-size:16px;border:none}
+.hint-btn{padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid #334155!important;font-size:11px;margin-top:8px;cursor:pointer}
+.hint-text{margin-top:8px;padding:8px 12px;background:rgba(251,191,36,.1);border-radius:8px;font-size:12px;color:#fbbf24;border:1px solid rgba(251,191,36,.2);animation:slideUp .3s}
+.ev-item{padding:12px 16px;background:rgba(14,165,233,.08);border-left:3px solid #0ea5e9;border-radius:0 8px 8px 0;margin-bottom:8px;animation:slideUp .3s}
+.ev-item .ev-id{font-size:12px;font-weight:700;color:#0ea5e9;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.ev-item .ev-desc{font-size:13px;color:#94a3b8;line-height:1.5}
+.empty{text-align:center;color:#334155;padding:48px 16px}
+.empty .ico{font-size:32px;margin-bottom:12px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px}
+.gal-item{aspect-ratio:1;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px;gap:8px;transition:.2s;background:rgba(255,255,255,.03);border:1px solid #1e293b}
+.gal-item.clue{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.2)}
+.gal-item:active{transform:scale(.96)}
+.brightness-slider{width:100%;accent-color:#0ea5e9}
+.note-card{padding:16px;background:rgba(255,255,255,.03);border-radius:10px;border:1px solid #1e293b;margin-bottom:12px}
+.note-card.encrypted{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.2)}
+.overlay{position:absolute;inset:0;background:#000;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;animation:fadeIn .5s;overflow-y:auto;text-align:center}
+.overlay.hidden{display:none}
+.pin-overlay{position:absolute;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.pin-overlay.hidden{display:none}
+.pin-dots{display:flex;gap:12px;margin-bottom:32px}
+.pin-dot{width:48px;height:56px;border-radius:8px;border:2px solid #334155;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#e2e8f0;background:rgba(255,255,255,.03);transition:.2s}
+.pin-dot.filled{border-color:#0ea5e9}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pin-key{width:64px;height:64px;border-radius:32px;border:1px solid #334155!important;background:rgba(255,255,255,.03);color:#e2e8f0;font-size:22px;font-weight:500;font-family:inherit;transition:.15s}
+.pin-key:active{background:rgba(14,165,233,.15);border-color:#0ea5e9!important}
+.pin-key.inv{visibility:hidden}
+.bottom-nav{display:flex;justify-content:space-around;padding:12px 0;border-top:1px solid #1e293b;background:rgba(17,17,24,.95);flex-shrink:0}
+.nav-btn{background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#475569;font-size:10px;font-family:inherit;padding:4px 8px}
+.nav-btn.active{color:#0ea5e9}
+.nav-btn .ico{font-size:20px}
+.notif-tray{position:absolute;top:40px;left:12px;right:12px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.notif{padding:12px 16px;border-radius:12px;background:rgba(14,165,233,.15);backdrop-filter:blur(20px);border:1px solid rgba(14,165,233,.3);animation:slideUp .3s;font-size:13px;color:#e2e8f0;font-weight:500}
+.notif.warn{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3)}
+#scene-chend{padding:32px;text-align:center}
+.jm{font-family:'JetBrains Mono',monospace}
+.grid-puzzle{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:16px auto;max-width:280px}
+.grid-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;border:1px solid #334155}
+.grid-cell.on{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+.grid-cell.off{background:#1e293b;color:#64748b}
+.shake{animation:shake .5s}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes glitchText{0%{transform:translate(0);opacity:1}10%{transform:translate(-3px,2px);opacity:.7}20%{transform:translate(3px,-1px);opacity:.9}30%{transform:translate(-1px,3px) skewX(-2deg);opacity:.6}40%{transform:translate(2px,-2px);opacity:1}50%{transform:translate(-2px,1px) skewX(1deg);opacity:.8}60%{transform:translate(1px,2px);opacity:.7}70%{transform:translate(-3px,-1px);opacity:.9}80%{transform:translate(2px,3px) skewX(-1deg);opacity:.6}90%{transform:translate(-1px,-2px);opacity:1}100%{transform:translate(0);opacity:1}}
+@keyframes glitchIn{0%{opacity:0;transform:translate(-5px,3px) skewX(-5deg)}20%{opacity:.6;transform:translate(3px,-2px) skewX(3deg)}40%{opacity:.3;transform:translate(-2px,1px)}60%{opacity:.8;transform:translate(1px,-1px) skewX(-1deg)}80%{opacity:.5;transform:translate(-1px,2px)}100%{opacity:1;transform:translate(0)}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.glitch-line{animation:glitchText 0.3s ease infinite;font-family:'JetBrains Mono',monospace}
+.epilogue-line{opacity:0;animation:glitchIn .8s ease forwards;font-family:'Playfair Display',serif;font-size:20px;color:#475569;margin-bottom:16px}
+.epilogue-line.truth{font-size:32px;font-weight:900;color:#0ea5e9;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="scene-load" class="scene active"><div class="loader">INITIALIZING...</div></div>
+  <div id="scene-title" class="scene">
+    <div class="title-sub">A Political Mystery</div>
+    <div class="title-main">FENTENOY<br>TRIAL</div>
+    <div class="title-loc">MALÉ, MALDIVES</div>
+    <div class="title-btns" id="title-btns"></div>
+    <div class="title-fp" id="title-fp"></div>
+  </div>
+  <div id="scene-intro" class="scene">
+    <div id="intro-lines"></div>
+    <div id="intro-counter"></div>
+  </div>
+  <div id="scene-phone" class="scene" style="justify-content:flex-start;align-items:stretch">
+    <div class="statusbar"><span id="sb-time"></span><span id="sb-label" class="phone-label yours">YOUR PHONE</span><span style="font-size:10px">▓▓▓▓</span></div>
+    <div class="phone-tabs"><button id="tab-yours" class="sel-yours">📱 Your Phone</button><button id="tab-pres" disabled>🔒 Zameer's Phone</button></div>
+    <div id="phone-body" class="phone-body"></div>
+    <div id="overlay" class="overlay hidden"></div>
+    <div id="pin-screen" class="pin-overlay hidden"></div>
+    <div id="notif-tray" class="notif-tray"></div>
+    <div class="bottom-nav">
+      <button class="nav-btn active" id="nav-home"><span class="ico">🏠</span>Home</button>
+      <button class="nav-btn" id="nav-chat"><span class="ico">💬</span>Chat</button>
+      <button class="nav-btn" id="nav-ev"><span class="ico">🔍</span>Evidence</button>
+    </div>
+  </div>
+  <div id="scene-chend" class="scene"><div id="chend-content"></div><div id="ev-overlay" class="overlay hidden"></div></div>
+</div>
+<script>
+
+(function(){
+"use strict";
+var VER='1.0.0',SAVE_KEY='fentenoy-v1';
+
+// ═══ STATE ═══
+var _rv='',_mc=0,_activeChat=null;
+var S={scene:'load',ch:1,step:0,fp:'',phone:'yours',app:'home',chat:null,msgs:{},ev:[],ps:{},typing:null,pin:'',hints:0,brightness:25,photo:null,choices:[],puzzle:null,puzzleChat:null,flags:{}};
+
+// ═══ CHARACTERS ═══
+var CHARS={
+  unknown:{name:'Unknown',color:'#00ffc8',ini:'?'},
+  naail:{name:'You',color:'#60a5fa',ini:'N'},
+  mariyam:{name:'Mariyam Dhiye',color:'#f472b6',ini:'M'},
+  nazim:{name:'Ahmed Nazim',color:'#a78bfa',ini:'A'},
+  shakir:{name:'Cmdr. Shakir',color:'#f87171',ini:'S'},
+  ali:{name:'Ali Rasheed',color:'#fbbf24',ini:'R'},
+  zameer:{name:'Pres. Zameer',color:'#e2e8f0',ini:'Z'},
+  thaaha:{name:'Thaaha',color:'#fb923c',ini:'T'},
+  farah:{name:'Farah Moosa',color:'#34d399',ini:'F'},
+  nadia:{name:'Nadia Ibrahim',color:'#c084fc',ini:'Nd'},
+  shareef:{name:'Dr. Shareef',color:'#22d3ee',ini:'Sh'},
+  waheed:{name:'Insp. Waheed',color:'#ef4444',ini:'W'},
+  leena:{name:'Leena',color:'#a3e635',ini:'L'},
+  asad:{name:'Maj. Asad',color:'#f97316',ini:'As'}
+};
+
+// ═══ ZAMEER DATA ═══
+var Z_MSGS={
+  mariyam:[
+    {f:'zameer',t:"Meeting running late. Don't wait up.",ti:'11:42 PM'},
+    {f:'mariyam',t:"You said that last night too.",ti:'11:44 PM'},
+    {f:'zameer',t:"I know. I'm sorry.",ti:'11:45 PM'},
+    {f:'mariyam',t:"The children asked about you.",ti:'11:46 PM'},
+    {f:'zameer',t:"Tell them baba will take them to Vilimalé this weekend.",ti:'11:50 PM'},
+    {f:'mariyam',t:"You always say that.",ti:'11:51 PM'},
+    {f:'zameer',t:"This time I mean it. After Thursday, everything changes.",ti:'11:53 PM'},
+    {f:'mariyam',t:"What happens Thursday?",ti:'11:54 PM'},
+    {f:'zameer',t:"I can't say yet. But trust me.",ti:'11:55 PM'},
+    {f:'mariyam',t:"I always do. That's the problem.",ti:'11:58 PM'}
+  ],
+  nazim:[
+    {f:'zameer',t:"Nazim, I need the Fentenoy files moved to the secondary server.",ti:'9:15 PM'},
+    {f:'nazim',t:"Sir, those files are classified under executive order.",ti:'9:18 PM'},
+    {f:'zameer',t:"I signed the order. I can unsign it.",ti:'9:19 PM'},
+    {f:'nazim',t:"With respect, the minister's office won't approve this.",ti:'9:22 PM'},
+    {f:'zameer',t:"The minister answers to me. Or has he forgotten?",ti:'9:23 PM'},
+    {f:'nazim',t:"I'll have it done by morning.",ti:'9:30 PM'},
+    {f:'zameer',t:"Before 6 AM. And Nazim — tell no one.",ti:'9:31 PM'}
+  ],
+  ali:[
+    {f:'ali',t:"Sir, your 8 PM is confirmed. Car will be at Gate 3.",ti:'6:30 PM'},
+    {f:'zameer',t:"Change it to Gate 1. And Ali, use the other car.",ti:'6:45 PM'},
+    {f:'ali',t:"The armored one? That requires MNDF clearance.",ti:'6:47 PM'},
+    {f:'zameer',t:"No. The silver Camry. Personal plates.",ti:'6:48 PM'},
+    {f:'ali',t:"Sir... that's unprotected. I strongly advise against—",ti:'6:49 PM'},
+    {f:'zameer',t:"That's an order, Ali. Gate 1. Silver Camry. No escort.",ti:'6:52 PM'},
+    {f:'ali',t:"Understood.",ti:'6:55 PM'}
+  ],
+  shakir:[
+    {f:'shakir',t:"Mr. President, the harbor project report is ready.",ti:'3:00 PM'},
+    {f:'zameer',t:"Send it encrypted. Use the old channel.",ti:'3:05 PM'},
+    {f:'shakir',t:"The old channel was decommissioned last month per your order.",ti:'3:08 PM'},
+    {f:'zameer',t:"Then bring it to me in person. Tonight.",ti:'3:10 PM'},
+    {f:'shakir',t:"I'll be at the Palace by 7.",ti:'3:12 PM'},
+    {f:'zameer',t:"Not the Palace. Café Raalhugandu. Back table.",ti:'3:15 PM'},
+    {f:'shakir',t:"...Understood, sir.",ti:'3:17 PM'}
+  ]
+};
+
+var _imgs={
+  1:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23192a56'/%3E%3Cstop offset='1' stop-color='%230a1628'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23a)' width='400' height='300'/%3E%3Crect x='120' y='180' width='160' height='100' rx='3' fill='%231a1a2e' stroke='%23334155' stroke-width='1'/%3E%3Crect x='130' y='190' width='60' height='40' rx='2' fill='%230f172a' stroke='%23475569' stroke-width='.5'/%3E%3Crect x='200' y='195' width='70' height='8' rx='1' fill='%23334155'/%3E%3Crect x='200' y='210' width='50' height='6' rx='1' fill='%23283548'/%3E%3Ccircle cx='200' cy='120' r='45' fill='%231e293b'/%3E%3Ccircle cx='200' cy='110' r='18' fill='%23334155'/%3E%3Crect x='182' y='132' width='36' height='35' rx='12' fill='%23334155'/%3E%3Crect x='60' y='40' width='280' height='8' rx='2' fill='%23162032'/%3E%3Crect x='60' y='55' width='280' height='3' rx='1' fill='%230ea5e9' opacity='.15'/%3E%3Ctext x='200' y='30' text-anchor='middle' fill='%23475569' font-family='serif' font-size='10'%3EOFFICIAL PORTRAIT%3C/text%3E%3C/svg%3E",
+  2:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2387CEEB'/%3E%3Cstop offset='.6' stop-color='%2300bcd4'/%3E%3Cstop offset='1' stop-color='%23006994'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23sky)' width='400' height='300'/%3E%3Crect y='180' width='400' height='120' fill='%23f5deb3'/%3E%3Crect y='170' width='400' height='20' fill='%2300bcd4' opacity='.3'/%3E%3Cellipse cx='100' cy='180' rx='90' ry='6' fill='%23e8d5a3'/%3E%3Ccircle cx='320' cy='60' r='30' fill='%23fff9c4' opacity='.9'/%3E%3Ccircle cx='140' cy='210' r='12' fill='%231e293b'/%3E%3Ccircle cx='140' cy='200' r='6' fill='%23334155'/%3E%3Crect x='134' y='208' width='12' height='14' rx='4' fill='%23334155'/%3E%3Ccircle cx='170' cy='212' r='10' fill='%231e293b'/%3E%3Ccircle cx='170' cy='204' r='5' fill='%23334155'/%3E%3Crect x='165' y='210' width='10' height='12' rx='4' fill='%23334155'/%3E%3Ccircle cx='155' cy='218' r='6' fill='%231e293b'/%3E%3Ccircle cx='200' cy='215' r='7' fill='%231e293b'/%3E%3Crect x='50' y='150' width='4' height='35' fill='%238B4513'/%3E%3Cellipse cx='52' cy='145' rx='20' ry='12' fill='%23228B22'/%3E%3C/svg%3E",
+  3:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23050508' width='400' height='300'/%3E%3Crect x='0' y='200' width='400' height='100' fill='%23080810'/%3E%3Crect x='50' y='160' width='8' height='140' fill='%23111' rx='1'/%3E%3Crect x='340' y='170' width='8' height='130' fill='%23111' rx='1'/%3E%3Crect x='44' y='155' width='20' height='4' fill='%23181820'/%3E%3Crect x='334' y='165' width='20' height='4' fill='%23181820'/%3E%3Crect x='100' y='200' width='80' height='60' fill='%230a0a12' stroke='%23151520' stroke-width='.5'/%3E%3Crect x='220' y='195' width='80' height='65' fill='%230a0a12' stroke='%23151520' stroke-width='.5'/%3E%3Ccircle cx='160' cy='240' r='3' fill='%23f59e0b' opacity='.15'/%3E%3Ccircle cx='270' cy='235' r='2' fill='%23f59e0b' opacity='.1'/%3E%3Cellipse cx='200' cy='250' rx='20' ry='30' fill='%230d0d15' opacity='.8'/%3E%3Cellipse cx='230' cy='245' rx='15' ry='25' fill='%230d0d15' opacity='.6'/%3E%3Ctext x='200' y='290' text-anchor='middle' fill='%231a1a2a' font-family='monospace' font-size='8'%3EDOCK 7%3C/text%3E%3C/svg%3E",
+  4:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e0f0ff'/%3E%3Cstop offset='1' stop-color='%23b8d4e8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23w)' width='400' height='300'/%3E%3Crect y='160' width='400' height='140' fill='%23006994'/%3E%3Crect x='80' y='100' width='120' height='80' fill='%23455a64' rx='2'/%3E%3Crect x='210' y='90' width='100' height='90' fill='%23546e7a' rx='2'/%3E%3Crect x='320' y='110' width='60' height='70' fill='%23455a64' rx='2'/%3E%3Crect x='90' y='120' width='40' height='25' fill='%23e74c3c' rx='1'/%3E%3Crect x='140' y='115' width='50' height='30' fill='%232196f3' rx='1'/%3E%3Crect x='220' y='110' width='35' height='20' fill='%23f39c12' rx='1'/%3E%3Crect x='270' y='105' width='30' height='25' fill='%2327ae60' rx='1'/%3E%3Crect x='0' y='155' width='400' height='10' fill='%23607d8b'/%3E%3Crect x='20' y='30' width='200' height='12' rx='2' fill='%23333' opacity='.7'/%3E%3Crect x='20' y='48' width='160' height='8' rx='1' fill='%23555' opacity='.5'/%3E%3Crect x='20' y='62' width='280' height='4' rx='1' fill='%23777' opacity='.3'/%3E%3Crect x='20' y='70' width='250' height='4' rx='1' fill='%23777' opacity='.3'/%3E%3Crect x='20' y='78' width='200' height='4' rx='1' fill='%23777' opacity='.3'/%3E%3Ctext x='20' y='40' fill='%23222' font-family='sans-serif' font-size='11' font-weight='bold'%3EMaldives Harbor Development%3C/text%3E%3C/svg%3E",
+  5:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23030306' width='400' height='300'/%3E%3Crect x='0' y='240' width='400' height='60' fill='%23060610'/%3E%3Crect x='130' y='180' width='140' height='65' rx='8' fill='%230a0a14'/%3E%3Crect x='135' y='185' width='55' height='35' rx='3' fill='%23101020'/%3E%3Crect x='200' y='185' width='55' height='35' rx='3' fill='%23101020'/%3E%3Crect x='155' y='230' width='90' height='10' rx='2' fill='%230d0d18'/%3E%3Crect x='148' y='222' width='8' height='12' rx='3' fill='%23f59e0b' opacity='.08'/%3E%3Crect x='245' y='222' width='8' height='12' rx='3' fill='%23dc2626' opacity='.06'/%3E%3Crect x='160' y='247' width='80' height='8' rx='1' fill='%230a0a12'/%3E%3Ctext x='200' y='253' text-anchor='middle' fill='%23181828' font-family='monospace' font-size='6'%3EL-4891-MV%3C/text%3E%3Crect x='60' y='130' width='3' height='120' fill='%230a0a14'/%3E%3Crect x='330' y='140' width='3' height='110' fill='%230a0a14'/%3E%3Ccircle cx='61' cy='125' r='5' fill='%23f59e0b' opacity='.04'/%3E%3C/svg%3E"
+};
+var Z_PHOTOS=[
+  {id:1,desc:"Official portrait — President Zameer at desk",br:100,clue:false,img:_imgs[1]},
+  {id:2,desc:"Family photo — Zameer with wife and children at Hulhumalé beach",br:100,clue:false,img:_imgs[2]},
+  {id:3,desc:"Blurry dark photo — shapes barely visible in low light",br:25,clue:true,reveal:"HARBOR DOCK 7 — A figure handing an envelope to someone in military uniform",revealAt:75,img:_imgs[3]},
+  {id:4,desc:"Screenshot of harbor development news article from Mihaaru",br:100,clue:false,img:_imgs[4]},
+  {id:5,desc:"Dark photo — almost black, taken at night from inside a vehicle",br:10,clue:true,reveal:"License plate: L-4891-MV on a silver sedan outside an unmarked building on Orchid Magu",revealAt:65,img:_imgs[5]}
+];
+
+// ═══ EVIDENCE DB ═══
+var EV_DB=[
+  {id:'msg_thursday',t:'Thursday Reference',d:"Zameer told his wife 'everything changes after Thursday'",ch:1},
+  {id:'no_escort',t:'No Security',d:"Zameer deliberately left without MNDF escort in an unprotected car",ch:1},
+  {id:'harbor_meeting',t:'Harbor Meeting',d:"Secret meeting with Cmdr. Shakir at Café Raalhugandu about harbor project",ch:1},
+  {id:'dock7_photo',t:'Dock 7 Handoff',d:"Photo showing envelope exchange with military figure at Harbor Dock 7",ch:1},
+  {id:'license_plate',t:'Silver Sedan',d:"License plate L-4891-MV spotted on Orchid Magu",ch:1},
+  {id:'cipher_decoded',t:'Decoded Warning',d:"THE PRESIDENT KNEW. THE HARBOR HOLDS THE TRUTH.",ch:1},
+  {id:'fentenoy_dossier',t:'Fentenoy Dossier',d:"$217M harbor contract. Shell company Cyan Atoll Ltd. $26M unaccounted.",ch:1},
+  {id:'cafe_receipt',t:'Café Receipt',d:"Zameer visited Café Raalhugandu 3 times in his last week. Always back table.",ch:2},
+  {id:'thaaha_cctv',t:'CCTV Footage',d:"Café security camera shows Zameer meeting an unidentified woman, not Shakir.",ch:2},
+  {id:'harbor_manifest',t:'Shipping Manifest',d:"Ghost shipments to Dock 7 — containers listed as 'construction materials' weigh far too little.",ch:2},
+  {id:'farah_testimony',t:"Farah's Account",d:"Harbor worker saw military vehicles at Dock 7 at 2 AM, three nights before disappearance.",ch:2},
+  {id:'nadia_flash',t:"Nadia's Flash Drive",d:"Zameer's secretary backed up files he was deleting in his final days.",ch:3},
+  {id:'shareef_audit',t:'Shadow Audit',d:"Dr. Shareef's forensic audit: 4 shell companies, all registered same week, same BVI agent.",ch:3},
+  {id:'deleted_email',t:'Deleted Email',d:"Draft email to international press: Zameer was preparing to leak Fentenoy documents.",ch:3},
+  {id:'burner_phone',t:'Burner Phone Records',d:"Zameer had a second phone. Called one number 47 times in final month: registered to Speaker's office.",ch:3},
+  {id:'fulhu_documents',t:"Fulhu's Documents",d:"Speaker's safe contained signed transfer orders routing Fentenoy funds through 3 shell companies.",ch:4},
+  {id:'waheed_confession',t:"Waheed's Confession",d:"Inspector Waheed confirms Speaker Fulhu ordered surveillance on Zameer in his final week.",ch:4},
+  {id:'surveillance_log',t:'Surveillance Log',d:"Detailed log of Zameer's movements, compiled by police on Speaker's orders. Marked 'EYES ONLY'.",ch:4},
+  {id:'leena_breakin',t:'Break-in Report',d:"Naail's apartment was broken into. Laptop searched, files copied. Professional job.",ch:5},
+  {id:'binary_decoded',t:'Binary Warning',d:"Decoded binary message: DOCK7. The location keeps pointing back to the harbor.",ch:5},
+  {id:'asad_testimony',t:"Asad's Confession",d:"Major Asad transported an unconscious person from Dock 7 on the night of disappearance, orders from above.",ch:5},
+  {id:'blood_evidence',t:'Blood in Camry',d:"Blood traces found in trunk of silver Camry L-4891-MV. DNA testing needed.",ch:5},
+  {id:'gps_route',t:"Driver's GPS Route",d:"GPS shows Camry drove from Dock 7 to an unmarked jetty, then to Velana airport cargo terminal.",ch:5},
+  {id:'sat_call',t:'Satellite Intercept',d:"Intercepted satellite call confirms Zameer is alive, held on a private island.",ch:6},
+  {id:'island_id',t:'Kudafinolhu Island',d:"Coordinates point to Kudafinolhu — private island owned by Speaker Fulhu's brother-in-law.",ch:6},
+  {id:'zameer_approved',t:'Zameer Approved Fentenoy',d:"Hidden phone partition: Zameer personally approved the Fentenoy kickback scheme before trying to expose it.",ch:6},
+  {id:'full_conspiracy',t:'Full Conspiracy Map',d:"Complete picture: Zameer approved Fentenoy, then got cold feet. Fulhu had him abducted to prevent exposure.",ch:7}
+];
+
+// ═══ HINTS ═══
+var HINTS={
+  pin:["Think about when the Maldives became a republic.","It was in the 1960s...","The answer is 1965."],
+  cipher:["Each letter shifts BACK by 3 positions. D→A, E→B...","W→T, K→H, H→E... First word is 'THE'","THE PRESIDENT KNEW. THE HARBOR HOLDS THE TRUTH."],
+  math:["Sum primes below 20: 2+3+5+7+11+13+17+19.","Sum = 77. Atolls in the Maldives?","77 − 26 = 51"],
+  riddle:["Controls Parliament from behind the scenes.","Think about the Majlis...","The Speaker of the Majlis."],
+  sequence:["Look at the differences between consecutive numbers.","Differences are 2, 3, 4, 5, 6... each increasing by 1.","2, 4, 7, 11, 16, 22, 29 — the answer is 29."],
+  anagram:["Rearrange the letters to form a location name.","It's a street in Malé.","ORCHID MAGU."],
+  morse:["Each group of dots/dashes is a letter. ... = S, --- = O","... --- ... = SOS, -.. = D, --- = O, -.-. = C, -.- = K","The message is SOS DOCK SEVEN."],
+  grid:["Turn all blue cells grey (off).","Tapping a cell toggles it AND its adjacent cells (up/down/left/right).","Try starting from the corners."],
+  combo:["Three numbers from your investigation. Think about places and times.","Café visits = 3, Dock number = 7, Military time 2AM = 2.","The combination is 3-7-2."],
+  binary:["Each 8-digit group is one ASCII character.","01000100 = D, 01001111 = O, 01000011 = C...","The answer is DOCK7."],
+  coords:["Convert degrees, minutes, seconds to decimal degrees.","3° 51' 54\" = 3 + 51/60 + 54/3600 ≈ 3.8650","Answer: 3.8650/73.4583 or the island name: Kudafinolhu."]
+};
+
+// ═══ CHAPTER DATA ═══
+var CHAPTERS={1:{title:'The Dead Signal',sub:'72 hours after the disappearance'},2:{title:"The Harbor's Mouth",sub:'The trail leads to the water'},3:{title:'Concrete & Coral',sub:'Follow the money'},4:{title:"The Speaker's Shadow",sub:'Power hides in plain sight'},5:{title:'Blood Tide',sub:'The truth has a body count'},6:{title:'The Glass Floor',sub:'The truth is transparent — if you look down'},7:{title:'The Vanishing Point',sub:'Every line converges'}};
+var OBJECTIVES={1:{1:'Read messages from Unknown.',2:'Pick up the package from Chaandhanee Magu.',3:"Unlock the President's phone.",4:"Explore Zameer's phone — check messages and gallery.",5:'Decode the cipher from Unknown.',6:'Solve the math puzzle to decrypt the Fentenoy file.',7:'Read the decrypted Fentenoy file.',8:"Answer Unknown's riddle."},2:{1:'Head to Café Raalhugandu.',2:'Talk to Thaaha the café owner.',3:'Solve the number sequence to unlock the CCTV.',4:'Decode the anagram to find the next location.',5:'Investigate the harbor — talk to Farah.'},3:{1:"Contact Zameer's secretary Nadia.",2:'Decode the Morse code message.',3:'Meet Dr. Shareef — forensic accountant.',4:'Crack the grid puzzle to access deleted files.',5:'Read the recovered emails.'},4:{1:"Open the Speaker's safe.",2:'Enter the combination.',3:"Examine Fulhu's documents.",4:'Confront Inspector Waheed.'},5:{1:'Talk to Leena about the break-in.',2:'Decode the binary message.',3:'Decide how to approach Major Asad.',4:"Get Asad's confession.",5:'Examine the blood evidence.'},6:{1:'Analyze the intercepted satellite call.',2:'Decode the coordinates.',3:'Identify the island.',4:"Access Zameer's hidden phone partition.",5:'Confront the truth about Zameer.'},7:{1:'Hear the full conspiracy.',2:'Make your final choice.'}};
+
+var INTRO=[
+  {text:"Malé, Republic of Maldives.",big:true,delay:2200},
+  {text:"72 hours ago.",big:true,delay:2000},
+  {text:"President Faarooq Zameer stepped into a black sedan outside the Presidential Palace.",delay:2500},
+  {text:"He never arrived at his destination.",delay:2200},
+  {text:"No ransom demand. No body. No official statement.",delay:2400},
+  {text:"The government says he's on a 'private retreat.'",delay:2200},
+  {text:"Nobody believes them.",delay:2000},
+  {text:"You are Naail Ahmed.",delay:1800},
+  {text:"Investigative journalist. Majeedee Magu beat.",delay:2000},
+  {text:"Three-time winner of the Maldives Press Award.",delay:2000},
+  {text:"Two-time recipient of death threats from the people you exposed.",delay:2400},
+  {text:"Tonight, your phone buzzes with a message from a number you don't recognize.",delay:2600}
+];
+
+var CH_INTROS={
+  2:[{text:"Two days into the investigation.",big:true,delay:2000},{text:"The cipher led you to the harbor. The dossier revealed a $217M conspiracy.",delay:2500},{text:"Café Raalhugandu. Back table. That's where Zameer was last seen by someone willing to talk.",delay:2500},{text:"Time to find out what the harbor is hiding.",delay:2000}],
+  3:[{text:"The harbor talks. The money whispers.",big:true,delay:2000},{text:"Ghost shipments. Phantom meetings. A president who was deleting files in his final days.",delay:2500},{text:"You need Zameer's secretary. And someone who can follow the money.",delay:2500},{text:"The deeper you dig, the more dangerous this gets.",delay:2000}],
+  4:[{text:"The Speaker's shadow falls over everything.",big:true,delay:2200},{text:"Shell companies. Surveillance orders. A man who moves money without touching it.",delay:2500},{text:"Speaker Ibrahim Fulhu. Everyone in Malé knows his name.",delay:2200},{text:"Time to find out what he's hiding.",delay:2000}],
+  5:[{text:"They know you're looking.",big:true,delay:2000},{text:"Your apartment has been searched. Your sources are going quiet.",delay:2400},{text:"But the blood doesn't lie. And the harbor has one more secret.",delay:2400},{text:"This is where it gets dangerous.",delay:2000}],
+  6:[{text:"He's alive.",big:true,delay:2500},{text:"Blood in the trunk. A GPS trail to nowhere. An unconscious body loaded onto a boat.",delay:2500},{text:"But a satellite intercept changes everything.",delay:2200},{text:"The glass floor shatters when you look down.",delay:2200}],
+  7:[{text:"The Vanishing Point.",big:true,delay:2500},{text:"Every line of evidence converges on one truth.",delay:2200},{text:"The President. The Speaker. The conspiracy.",delay:2200},{text:"And the person who brought you here.",delay:2000},{text:"Now you must choose: what kind of truth does the Maldives deserve?",delay:2800}]
+};
+
+// ═══ SOUND ═══
+var _ac=null;
+function ac(){try{if(!_ac)_ac=new(window.AudioContext||window.webkitAudioContext)();return _ac}catch(e){return null}}
+function tone(f,d,ty,v){try{var c=ac();if(!c)return;var o=c.createOscillator(),g=c.createGain();o.type=ty||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.08,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
+var SFX={
+  click:function(){tone(600,.06,'square',.12)},
+  notify:function(){tone(880,.12,'sine',.25);setTimeout(function(){tone(1100,.15,'sine',.2)},120)},
+  success:function(){tone(523,.15,'sine',.25);setTimeout(function(){tone(659,.15,'sine',.25)},150);setTimeout(function(){tone(784,.25,'sine',.25)},300)},
+  error:function(){tone(200,.3,'sawtooth',.2)},
+  tension:function(){tone(120,1.5,'sawtooth',.12);tone(123,1.5,'sawtooth',.12)},
+  unlock:function(){tone(440,.1,'sine',.25);setTimeout(function(){tone(554,.1,'sine',.25)},100);setTimeout(function(){tone(659,.1,'sine',.25)},200);setTimeout(function(){tone(880,.2,'sine',.3)},300)},
+  drama:function(){tone(80,2,'sawtooth',.15);tone(83,2,'sawtooth',.15)},
+  warn:function(){tone(300,.2,'square',.2);setTimeout(function(){tone(200,.3,'square',.2)},200)},
+  msg:function(){tone(1200,.04,'sine',.1)},
+  choice:function(){tone(500,.06,'sine',.15);setTimeout(function(){tone(700,.08,'sine',.1)},80)},
+  reveal:function(){tone(660,.2,'sine',.2);setTimeout(function(){tone(880,.15,'sine',.15)},200)}
+};
+
+// ═══ UTILS ═══
+function $(id){return document.getElementById(id)}
+function timeStr(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+function dateStr(){return new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ═══ FINGERPRINT + SAVE ═══
+function fingerprint(){
+  try{
+    var c=document.createElement('canvas'),x=c.getContext('2d');
+    if(!x)return'FT-fb-'+Date.now().toString(36);
+    x.textBaseline='top';x.font='14px Arial';x.fillStyle='#f60';x.fillRect(125,1,62,20);
+    x.fillStyle='#069';x.fillText('Fentenoy',2,15);x.fillStyle='rgba(102,204,0,0.7)';x.fillText('Trial',4,17);
+    var d=c.toDataURL(),h=0;
+    for(var i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h|=0}
+    var n=navigator.userAgent+navigator.language+screen.width+screen.height,nh=0;
+    for(var j=0;j<n.length;j++){nh=((nh<<5)-nh)+n.charCodeAt(j);nh|=0}
+    return'FT-'+Math.abs(h).toString(36)+'-'+Math.abs(nh).toString(36);
+  }catch(e){return'FT-fb-'+Date.now().toString(36)}
+}
+function save(){try{localStorage.setItem(SAVE_KEY+'-'+S.fp,JSON.stringify({ch:S.ch,step:S.step,ev:S.ev,ps:S.ps,msgs:S.msgs,phone:S.phone,fp:S.fp,flags:S.flags,app:S.app,chat:S.chat,choices:S.choices,puzzle:S.puzzle,puzzleChat:S.puzzleChat,v:VER}))}catch(e){}}
+function load(fp){try{var r=localStorage.getItem(SAVE_KEY+'-'+fp);if(!r)return false;var d=JSON.parse(r);if(d.v!==VER||d.fp!==fp)return false;S.ch=d.ch||1;S.step=d.step||0;S.ev=d.ev||[];S.ps=d.ps||{};S.msgs=d.msgs||{};S.phone=d.phone||'yours';S.flags=d.flags||{};S.app=d.app||'home';S.chat=d.chat||null;S.choices=d.choices||[];S.puzzle=d.puzzle||null;S.puzzleChat=d.puzzleChat||null;if(S.choices.length&&S.chat)_activeChat=S.chat;return true}catch(e){return false}}
+var _svt=null;
+function autoSave(){clearTimeout(_svt);_svt=setTimeout(save,1000)}
+
+// ═══ SCENES ═══
+function showScene(id){document.querySelectorAll('.scene').forEach(function(el){el.classList.remove('active')});var el=$('scene-'+id);if(el)el.classList.add('active');S.scene=id}
+
+// ═══ NOTIFICATIONS ═══
+function notify(text,warn){
+  SFX.notify();var tray=$('notif-tray');if(!tray)return;
+  var n=document.createElement('div');n.className='notif'+(warn?' warn':'');n.textContent=text;tray.appendChild(n);
+  setTimeout(function(){n.style.opacity='0';n.style.transition='opacity .5s';setTimeout(function(){n.remove()},600)},3500);
+}
+
+// ═══ EVIDENCE ═══
+function addEv(id){
+  if(S.ev.find(function(e){return e.id===id}))return;
+  var item=EV_DB.find(function(e){return e.id===id});
+  if(item){S.ev.push({id:item.id,t:item.t,d:item.d});notify('Evidence: '+item.t);SFX.unlock();autoSave()}
+}
+
+// ═══ MESSAGES ═══
+function addMsg(cid,from,text,cb){
+  _activeChat=cid;
+  var needFull=S.chat!==cid||S.app!=='messages';
+  S.chat=cid;S.typing=from;
+  if(needFull){S.app='messages';_rv='';render()}else render();
+  SFX.msg();
+  var delay=Math.min(2800,900+text.length*14);
+  setTimeout(function(){
+    S.typing=null;
+    if(!S.msgs[cid])S.msgs[cid]=[];
+    S.msgs[cid].push({f:from,t:text,ti:timeStr()});
+    autoSave();render();scrollChat();
+    if(cb)setTimeout(cb,450);
+  },delay);
+}
+function scrollChat(){setTimeout(function(){var a=document.querySelector('.msg-area');if(a)a.scrollTop=a.scrollHeight},80)}
+function setChoices(arr){S.choices=arr;if(arr.length){_activeChat=S.chat;SFX.choice()}render()}
+function setPuzzle(type,chatId){S.puzzle=type;S.puzzleChat=chatId;S.hints=0;render()}
+function clearPuzzle(){S.puzzle=null;S.puzzleChat=null;S.hints=0}
+
+// ═══ OVERLAYS ═══
+function showOv(h){var c=$('overlay');c.innerHTML=h;c.classList.remove('hidden')}
+function hideOv(){$('overlay').classList.add('hidden')}
+
+function showPin(){S.puzzle='pin';S.pin='';S.hints=0;$('pin-screen').classList.remove('hidden');renderPin()}
+function hidePin(){$('pin-screen').classList.add('hidden')}
+
+function renderPin(){
+  var c=$('pin-screen');
+  var dots='';
+  for(var i=0;i<4;i++){dots+='<div class="pin-dot'+(S.pin.length>i?' filled':'')+'">'+((S.pin[i])?'•':'')+'</div>'}
+  var keys='';
+  [1,2,3,4,5,6,7,8,9,null,0,'⌫'].forEach(function(n){
+    if(n===null){keys+='<button class="pin-key inv"></button>';return}
+    keys+='<button class="pin-key" onclick="G.pressPin(\''+n+'\')">'+n+'</button>';
+  });
+  c.innerHTML='<div class="jm" style="font-size:11px;color:#475569;letter-spacing:3px;margin-bottom:24px">ENTER PIN TO UNLOCK</div><div class="pin-dots">'+dots+'</div><div class="pin-grid">'+keys+'</div><div style="margin-top:24px">'+renderHints()+'</div>';
+}
+
+function pressPin(val){
+  SFX.click();
+  if(val==='⌫'){S.pin=S.pin.slice(0,-1);renderPin();return}
+  if(S.pin.length>=4)return;
+  S.pin+=val;renderPin();
+  if(S.pin.length===4){
+    setTimeout(function(){
+      if(S.pin==='1965'){
+        SFX.success();S.ps.pin=true;S.pin='';clearPuzzle();hidePin();S.step=3;autoSave();
+        showOv('<div style="font-size:48px;margin-bottom:16px">🔓</div><div style="font-family:\'Playfair Display\',serif;font-size:24px;font-weight:700;margin-bottom:12px">Phone Unlocked</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:32px">President Zameer\'s personal phone is now accessible. Messages, photos, notes — everything he tried to hide.</div><button class="btn-primary" onclick="G.doChoice(\'c1_unlock\')">Begin Exploring →</button>');
+      }else{
+        SFX.error();shakeEl('phone-body');S.pin='';setTimeout(renderPin,500);
+      }
+    },200);
+  }
+}
+
+// ═══ HINTS ═══
+function renderHints(){
+  var type=S.puzzle;if(!type||!HINTS[type])return'';
+  var h='';
+  if(S.hints<3)h+='<button class="hint-btn" onclick="G.useHint()">💡 Hint ('+(3-S.hints)+' left)</button>';
+  if(S.hints>0)h+='<div class="hint-text">'+esc(HINTS[type][S.hints-1])+'</div>';
+  return h;
+}
+function useHint(){
+  if(S.hints>=3)return;
+  var lv=S.hints;var a,b,cc,q,ans;
+  if(lv===0){a=3+Math.floor(Math.random()*7);b=2+Math.floor(Math.random()*8);q=a+' + '+b;ans=a+b}
+  else if(lv===1){a=3+Math.floor(Math.random()*6);b=3+Math.floor(Math.random()*6);q=a+' \u00d7 '+b;ans=a*b}
+  else{a=4+Math.floor(Math.random()*6);b=3+Math.floor(Math.random()*5);cc=1+Math.floor(Math.random()*10);q=a+' \u00d7 '+b+' \u2212 '+cc;ans=a*b-cc}
+  S._hintAns=ans;var labels=['EASY','MEDIUM','HARD'];
+  SFX.click();
+  showOv('<div style="font-size:32px;margin-bottom:16px">\ud83d\udca1</div><div class="jm" style="font-size:11px;letter-spacing:3px;color:#fbbf24;margin-bottom:16px">HINT CHALLENGE \u2014 '+labels[lv]+'</div><div style="font-family:\'Playfair Display\',serif;font-size:32px;font-weight:700;margin-bottom:24px">'+q+' = ?</div><div class="puzzle-row" style="max-width:220px"><input class="puzzle-input" id="hint-input" placeholder="Answer..." onkeydown="if(event.key===\'Enter\')G.checkHint()"><button class="puzzle-go" onclick="G.checkHint()">\u2192</button></div>');
+}
+function checkHint(){
+  var el=document.getElementById('hint-input');if(!el)return;
+  if(parseInt(el.value)===S._hintAns){S.hints++;SFX.success();hideOv();if(S.puzzle==='pin')renderPin();else render()}
+  else{SFX.error();shakeEl('overlay')}
+}
+
+// ═══ SHAKE ═══
+function shakeEl(id){var el=$(id);if(el){el.classList.add('shake');setTimeout(function(){el.classList.remove('shake')},500)}}
+
+// ═══ NAV ═══
+function _convoActive(){return S.choices.length>0||S.typing||S.puzzle}
+function switchPhone(w){if(w==='president'&&!S.ps.pin)return;SFX.click();S.phone=w;S.app='home';S.chat=null;_rv='';render()}
+function navApp(app){
+  // During active convo: only block phone-app switching, not bottom nav
+  // Bottom nav (home/messages/evidence) always allowed; app icons locked
+  var isBottomNav=(app==='home'||app==='messages'||app==='evidence'||app==='notes');
+  if(_convoActive()&&!isBottomNav){SFX.error();return}SFX.click();_rv='';
+  if(S.phone==='president'&&['messages','gallery','notes','email'].indexOf(app)!==-1)S.app='p_'+app;
+  else S.app=app;
+  S.chat=null;render();
+}
+function openChat(cid){
+  SFX.click();_rv='';S.chat=cid;
+  if(S.phone==='president'&&cid){
+    if(cid==='mariyam')addEv('msg_thursday');
+    if(cid==='ali')addEv('no_escort');
+    if(cid==='shakir')addEv('harbor_meeting');
+  }
+  render();scrollChat();
+}
+
+// ═══ TITLE & INTRO ═══
+function startNew(){
+  SFX.tension();S.ch=1;S.step=0;S.msgs={};S.ev=[];S.ps={};S.choices=[];S.flags={};clearPuzzle();
+  showScene('intro');runIntro(INTRO);
+}
+function continueGame(){
+  SFX.click();
+  // If game was completed, show epilogue directly
+  if(S.flags.complete){
+    showScene('chend');
+    var el=$('chend-content');
+    if(el){el.innerHTML='';el.style.opacity='1'}
+    _runEpilogue();
+    return;
+  }
+  // Restore _activeChat for choices display
+  if(S.choices.length&&S.chat)_activeChat=S.chat;
+  showScene('phone');render();
+  // Ch1 pre-PIN: player hasn't unlocked Zameer's phone yet
+  if(S.ch===1&&!S.ps.pin){
+    if(S.step>=2){setTimeout(showPickup,300);return}
+    if(S.step===1&&S.msgs.unknown&&S.msgs.unknown.length>0&&!S.choices.length){
+      S.step=2;save();setTimeout(showPickup,300);return;
+    }
+  }
+  // Mid-puzzle restore
+  if(S.puzzle==='pin'&&!S.ps.pin){setTimeout(showPin,300);return}
+  if(S.puzzle&&S.puzzle!=='pin'&&S.puzzleChat){S.app='messages';S.chat=S.puzzleChat;_activeChat=S.puzzleChat;render()}
+}
+
+function runIntro(lines){
+  var box=$('intro-lines'),counter=$('intro-counter');if(!box||!counter)return;box.innerHTML='';
+  var idx=0;
+  function next(){
+    if(idx>=lines.length){setTimeout(function(){showScene('phone');beginChapter(S.ch)},1500);return}
+    box.querySelectorAll('.intro-line.visible').forEach(function(el){el.classList.remove('visible');el.classList.add('past')});
+    var line=lines[idx];
+    var div=document.createElement('div');
+    div.className='intro-line'+(line.big?' big':'');
+    div.textContent=line.text;
+    box.appendChild(div);
+    counter.textContent=(idx+1)+' / '+lines.length;
+    setTimeout(function(){div.classList.add('visible')},100);
+    var d=line.delay;idx++;setTimeout(next,d);
+  }
+  next();
+}
+
+// ═══ CHAPTER ENGINE ═══
+function beginChapter(ch){
+  S.ch=ch;S.step=0;S.phone='yours';S.app='home';S.chat=null;S.choices=[];clearPuzzle();
+  if(S.ps.pin){var btn=$('tab-pres');if(btn){btn.disabled=false;btn.textContent="📱 Zameer's Phone"}}
+  render();
+  if(ch===1)ch1Flow();
+  else if(ch===2)ch2Flow();
+  else if(ch===3)ch3Flow();
+  else if(ch===4)ch4Flow();
+  else if(ch===5)ch5Flow();
+  else if(ch===6)ch6Flow();
+  else if(ch===7)ch7Flow();
+}
+
+function showChTitle(ch,cbName){
+  var d=CHAPTERS[ch];
+  showOv('<div class="jm" style="font-size:11px;letter-spacing:6px;color:#0ea5e9;margin-bottom:24px">CHAPTER '+ch+'</div><div style="font-family:\'Playfair Display\',serif;font-size:28px;font-weight:900;margin-bottom:12px">'+esc(d.title)+'</div><div style="font-size:14px;color:#64748b;margin-bottom:32px;font-style:italic">'+esc(d.sub)+'</div><button class="btn-primary" onclick="G.hideOv();G.'+cbName+'()">Continue →</button>');
+  SFX.drama();
+}
+
+function goNextCh(ch){
+  S.ch=ch;autoSave();
+  var intros=CH_INTROS[ch];
+  if(intros){showScene('intro');runIntro(intros)}
+  else{showScene('phone');beginChapter(ch)}
+}
+
+function endChapter(ch){
+  var totalEv=EV_DB.filter(function(e){return e.ch===ch}).length;
+  var gotEv=S.ev.filter(function(e){var db=EV_DB.find(function(d){return d.id===e.id});return db&&db.ch===ch}).length;
+  var d=CHAPTERS[ch];
+  var h='<div class="jm" style="font-size:11px;letter-spacing:6px;color:#0ea5e9;margin-bottom:24px">CHAPTER '+ch+' COMPLETE</div><div style="font-family:\'Playfair Display\',serif;font-size:32px;font-weight:900;margin-bottom:16px">'+esc(d.title)+'</div><div style="color:#64748b;font-size:14px;margin-bottom:8px">Evidence: '+gotEv+'/'+totalEv+'</div>';
+  var nx=CHAPTERS[ch+1];
+  if(nx){h+='<div style="margin-top:32px;font-family:\'JetBrains Mono\',monospace;font-size:13px;color:#334155;letter-spacing:2px">NEXT: '+nx.title.toUpperCase()+'</div><button class="btn-primary" style="margin-top:24px" onclick="G.goNextCh('+(ch+1)+')">Continue to Chapter '+(ch+1)+' →</button>'}
+  else{h+='<div style="margin-top:32px;font-size:16px;color:#e2e8f0;line-height:1.8;max-width:340px">More chapters coming soon...</div>'}
+  h+='<button class="btn-ghost" style="margin-top:16px" onclick="G.showEvOv()">Review Evidence</button>';
+  $('chend-content').innerHTML=h;showScene('chend');SFX.success();autoSave();
+}
+
+// ═══ CHAPTER 1 ═══
+function ch1Flow(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"Naail Ahmed. I know who you are. And I know you're the only one in this city with the guts to find the truth.",function(){
+      addMsg('unknown','unknown',"President Zameer didn't go on any retreat. He vanished. And I have his phone.",function(){
+        addMsg('unknown','unknown',"Dead drop behind the fish market on Chaandhanee Magu. Blue plastic bag. Before Fajr prayer.",function(){
+          S.step=1;autoSave();
+          setChoices([{text:"Who are you? Why should I trust you?",action:'c1_q'},{text:"I'll be there.",action:'c1_go'}]);
+        });
+      });
+    });
+  },1200);
+}
+
+function showPickup(){
+  showOv('<div class="jm" style="font-size:11px;color:#475569;letter-spacing:4px;margin-bottom:16px">3:47 AM — CHAANDHANEE MAGU</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:24px">The fish market. Wet concrete. Tuna blood and diesel. Behind the third stall — a blue plastic bag. Inside: a phone. The President\'s.</div><div style="font-size:14px;color:#e2e8f0;line-height:1.8;max-width:320px;margin-bottom:32px">Cracked screen. 23% battery. Locked with a 4-digit PIN.</div><button class="btn-primary" onclick="G.doChoice(\'c1_pin\')">Attempt to Unlock →</button>');
+}
+
+// ═══ CHAPTER 2: THE HARBOR'S MOUTH ═══
+function ch2Flow(){
+  showChTitle(2,'startCh2');
+}
+function startCh2(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"The dossier points to the harbor. But first, Café Raalhugandu — Zameer's last known meeting place.",function(){
+      addMsg('unknown','unknown',"Ask for Thaaha. He owns the place. Tell him you're writing about the harbor development.",function(){
+        S.step=1;autoSave();
+        setChoices([{text:"I'm heading there now.",action:'c2_cafe'}]);
+      });
+    });
+  },800);
+}
+
+// ═══ CHAPTER 3: CONCRETE & CORAL ═══
+function ch3Flow(){
+  showChTitle(3,'startCh3');
+}
+function startCh3(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"Nadia Ibrahim. Zameer's personal secretary for 6 years. She knows things nobody else does.",function(){
+      addMsg('unknown','unknown',"But first — decode this. It was the last message sent from Zameer's burner phone:",function(){
+        addMsg('unknown','unknown',"... --- ... / -.. --- -.-. -.- / ... . ...- . -.",function(){
+          S.step=1;autoSave();
+          setPuzzle('morse','unknown');
+        });
+      });
+    });
+  },800);
+}
+
+// ═══ CHAPTER 4: THE SPEAKER'S SHADOW ═══
+function ch4Flow(){
+  showChTitle(4,'startCh4');
+}
+function startCh4(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"Speaker Fulhu keeps a safe in his private office at the Majlis. I know someone who can get you in tonight.",function(){
+      addMsg('unknown','unknown',"The combination uses three numbers from your investigation. Think about what you've learned:",function(){
+        addMsg('unknown','unknown',"How many times did Zameer visit the café? Which dock? What time did the military vehicles arrive?",function(){
+          S.step=1;autoSave();
+          setPuzzle('combo','unknown');
+        });
+      });
+    });
+  },800);
+}
+
+// ═══ CHAPTER 5: BLOOD TIDE ═══
+function ch5Flow(){
+  showChTitle(5,'startCh5');
+}
+function startCh5(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"Naail — check your apartment. Something happened while you were at the Majlis.",function(){
+      S.step=1;autoSave();
+      setChoices([{text:"What do you mean?",action:'c5_start'}]);
+    });
+  },800);
+}
+
+// ═══ CHAPTER 6: THE GLASS FLOOR ═══
+function ch6Flow(){
+  showChTitle(6,'startCh6');
+}
+function startCh6(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"Naail. Stop everything. I intercepted a satellite phone call twenty minutes ago.",function(){
+      addMsg('unknown','unknown',"It was Zameer. He's alive.",function(){
+        addEv('sat_call');
+        addMsg('unknown','unknown',"The call was routed through an encrypted relay, but I pulled the coordinates from the signal metadata:",function(){
+          addMsg('unknown','unknown','3° 51\' 54" N, 73° 27\' 30" E',function(){
+            addMsg('unknown','unknown',"Convert those coordinates to decimal degrees. Or if you can identify the island directly — tell me the name.",function(){
+              S.step=2;autoSave();
+              setPuzzle('coords','unknown');
+            });
+          });
+        });
+      });
+    });
+  },800);
+}
+
+// ═══ CHAPTER 7: THE VANISHING POINT ═══
+function ch7Flow(){
+  showChTitle(7,'startCh7');
+}
+function startCh7(){
+  S.app='messages';S.chat='unknown';render();
+  setTimeout(function(){
+    addMsg('unknown','unknown',"You have everything now, Naail. Let me lay it all out.",function(){
+      addMsg('unknown','unknown',"President Zameer personally approved the Fentenoy kickback scheme — $26 million diverted through shell companies to Speaker Fulhu's network.",function(){
+        addMsg('unknown','unknown',"Then Zameer got cold feet. He started deleting files. Preparing to leak to international press. He wanted to expose Fulhu and position himself as the whistleblower.",function(){
+          addMsg('unknown','unknown',"But Fulhu found out. He ordered surveillance, then had Zameer abducted from his own car. Dock 7. A boat. And now an island prison.",function(){
+            addEv('full_conspiracy');
+            addMsg('unknown','unknown',"Both men are guilty, Naail. The question is: what do you do with the truth?",function(){
+              S.step=2;autoSave();
+              setChoices([
+                {text:"Expose everyone. The full truth. Let the people decide.",action:'c7_expose'},
+                {text:"Protect Zameer. Only expose Fulhu. The country needs stability.",action:'c7_protect'},
+                {text:"First — tell me who YOU are. I won't publish until I know my source.",action:'c7_unmask'}
+              ]);
+            });
+          });
+        });
+      });
+    });
+  },800);
+}
+
+// ═══ CHOICE HANDLER ═══
+function doChoice(a){
+  S.choices=[];_activeChat=null;SFX.click();
+
+  if(a==='c1_q'){addMsg('unknown','naail',"Who are you? Why should I trust you?",function(){addMsg('unknown','unknown',"Trust the evidence on that phone. Chaandhanee Magu. Blue bag. Go.",function(){S.step=2;save();setTimeout(showPickup,800)})})}
+  if(a==='c1_go'){addMsg('unknown','naail',"I'll be there.",function(){addMsg('unknown','unknown',"Smart. Don't tell anyone. They're monitoring.",function(){S.step=2;save();setTimeout(showPickup,800)})})}
+  if(a==='c1_pin'){hideOv();showPin()}
+  if(a==='c1_unlock'){hideOv();clearPuzzle();S.phone='president';S.app='home';var btn=$('tab-pres');if(btn){btn.disabled=false;btn.textContent="📱 Zameer's Phone"}notify("President's phone unlocked. Explore messages and gallery.");S.step=4;autoSave();render()}
+
+  if(a==='c1_photo'){
+    S.photo=null;clearPuzzle();
+    if(!S.ps.cipher){
+      setTimeout(function(){
+        notify('New message from Unknown');S.phone='yours';S.app='messages';S.chat='unknown';render();
+        addMsg('unknown','unknown',"Good work on the photos. Now decode this. Each letter shifts back by 3:",function(){
+          addMsg('unknown','unknown',"WKH SUHVLGHQW NQHZ. WKH KDUERU KROGV WKH WUXWK.",function(){
+            addMsg('unknown','unknown',"Tell me what it says. All caps.",function(){
+              S.step=5;autoSave();setPuzzle('cipher','unknown');
+            });
+          });
+        });
+      },1000);
+    }
+  }
+
+  if(a==='c1_cipher'){clearPuzzle();addEv('cipher_decoded');setTimeout(function(){addMsg('unknown','unknown',"The harbor project isn't what they told the public. There's an encrypted file on Zameer's notes app.",function(){addMsg('unknown','unknown',"Sum of all primes below 20, minus the number of administrative atolls in the Maldives. What remains?",function(){S.step=6;autoSave();setPuzzle('math','unknown')})})},800)}
+
+  if(a==='c1_math'){clearPuzzle();setTimeout(function(){
+    showOv('<div style="font-size:48px;margin-bottom:16px">📂</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#22c55e;margin-bottom:12px">DECRYPTION SUCCESSFUL</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px">Fentenoy Dossier Unlocked</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">$217M harbor expansion contract.<br>Contractor: Malé Maritime Holdings<br>Beneficiary: Cyan Atoll Ltd (BVI)<br>Directors linked to Speaker Fulhu\'s brother-in-law<br>Kickback: 12% → $26M unaccounted</div><button class="btn-primary" onclick="G.doChoice(\'c1_file\')">Continue →</button>');
+    SFX.tension();addEv('fentenoy_dossier');S.step=7;autoSave();
+  },600)}
+
+  if(a==='c1_file'){hideOv();setTimeout(function(){
+    S.phone='yours';S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"Now you know what Fentenoy is. Zameer was going to blow the whistle — or take his cut.",function(){
+      addMsg('unknown','unknown',"One last test. A riddle:",function(){
+        addMsg('unknown','unknown',"I sit in power but hold no office. I move money but own no bank. I silence voices but fire no gun. Everyone in Malé knows my name, but no one dares speak it. Who am I?",function(){
+          S.step=8;autoSave();setPuzzle('riddle','unknown');
+        });
+      });
+    });
+  },400)}
+
+  if(a==='c1_riddle'){clearPuzzle();addMsg('unknown','unknown',"The Speaker of the Majlis. Ibrahim Fulhu. Remember that name.",function(){addMsg('unknown','unknown',"Chapter 1 complete. You've proven yourself, Naail. But this is just the surface.",function(){endChapter(1)})})}
+
+  // ── CH2 CHOICES ──
+  if(a==='c2_cafe'){
+    showOv('<div class="jm" style="font-size:11px;color:#475569;letter-spacing:4px;margin-bottom:16px">CAFÉ RAALHUGANDU — BACK TABLE</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:24px">Plastic chairs. Strong coffee. The hum of a ceiling fan that\'s seen better days. A man behind the counter watches you with cautious eyes.</div><button class="btn-primary" onclick="G.doChoice(\'c2_thaaha\')">Talk to Thaaha →</button>');
+    SFX.tension();
+  }
+  if(a==='c2_thaaha'){
+    hideOv();S.app='messages';S.chat='thaaha';render();
+    setTimeout(function(){
+      addMsg('thaaha','naail',"Thaaha? I'm writing about the harbor development. I heard the President used to come here.",function(){
+        addMsg('thaaha','thaaha',"The President? He came three times in his last week. Always the back table. Always alone.",function(){
+          addEv('cafe_receipt');
+          addMsg('thaaha','thaaha',"Except the last time. There was a woman with him. I didn't recognize her.",function(){
+            addMsg('thaaha','thaaha',"Look — I have CCTV. But the system's locked behind a security code.",function(){
+              S.step=2;autoSave();
+              addMsg('thaaha','thaaha',"The code is a number sequence. My nephew set it up: 2, 4, 7, 11, 16, 22, ___",function(){
+                S.step=3;autoSave();setPuzzle('sequence','thaaha');
+              });
+            });
+          });
+        });
+      });
+    },600);
+  }
+  if(a==='c2_cctv'){
+    clearPuzzle();
+    showOv('<div style="font-size:48px;margin-bottom:16px">📹</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#22c55e;margin-bottom:12px">CCTV ACCESSED</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px">Security Footage</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">Timestamp: Feb 7, 8:47 PM<br><br>Zameer sits at the back table. A woman in a dark headscarf approaches. They speak intensely for 12 minutes.<br><br>She slides a manila envelope across the table. He puts it inside his jacket.<br><br>They leave separately.</div><button class="btn-primary" onclick="G.doChoice(\'c2_after_cctv\')">Continue →</button>');
+    addEv('thaaha_cctv');SFX.tension();
+  }
+  if(a==='c2_after_cctv'){
+    hideOv();S.phone='yours';S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"You saw the woman. She's connected to the harbor. I need you to find where she went.",function(){
+      addMsg('unknown','unknown',"Thaaha heard her mention a street name as she left. He wrote it down but the letters got scrambled:",function(){
+        addMsg('unknown','unknown',"H-D-I-C-R-O  G-A-M-U",function(){
+          addMsg('unknown','unknown',"Unscramble it. It's a location in Malé.",function(){
+            S.step=4;autoSave();setPuzzle('anagram','unknown');
+          });
+        });
+      });
+    });
+  }
+  if(a==='c2_harbor'){
+    clearPuzzle();
+    showOv('<div class="jm" style="font-size:11px;color:#475569;letter-spacing:4px;margin-bottom:16px">ORCHID MAGU — THE HARBOR DISTRICT</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:24px">Salt air. Diesel fumes. Cargo containers stacked like children\'s blocks against the night sky.<br><br>Dock 7 is at the far end, behind a rusted chain-link fence. A woman in overalls sits on a crate, smoking.</div><button class="btn-primary" onclick="G.doChoice(\'c2_farah\')">Approach Her →</button>');
+    SFX.drama();
+  }
+  if(a==='c2_farah'){
+    hideOv();S.app='messages';S.chat='farah';render();
+    setTimeout(function(){
+      addMsg('farah','naail',"Farah Moosa? I'm a journalist. I'm looking into activity at Dock 7.",function(){
+        addMsg('farah','farah',"Journalist. Right. You know what happens to journalists who ask about Dock 7?",function(){
+          setChoices([{text:"I know the risks. People deserve the truth.",action:'c2_farah_truth'},{text:"I have evidence that connects Dock 7 to the President's disappearance.",action:'c2_farah_ev'}]);
+        });
+      });
+    },600);
+  }
+  if(a==='c2_farah_truth'||a==='c2_farah_ev'){
+    addMsg('farah','naail',a==='c2_farah_truth'?"I know the risks. People deserve the truth.":"I have evidence connecting Dock 7 to the President.",function(){
+      addMsg('farah','farah',"...Fine. I've been here 11 years. I've seen things.",function(){
+        addMsg('farah','farah',"Ghost shipments. Containers marked 'construction materials' that weigh nothing. They come in at 2 AM, always Dock 7.",function(){
+          addEv('harbor_manifest');
+          addMsg('farah','farah',"Three nights before the President vanished, military vehicles showed up. No paperwork. No manifests.",function(){
+            addEv('farah_testimony');
+            addMsg('farah','farah',"Whatever they loaded onto that boat — it wasn't concrete.",function(){
+              S.step=5;autoSave();
+              addMsg('farah','farah',"Be careful, Naail. The people running Dock 7 don't leave loose ends.",function(){
+                endChapter(2);
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  // ── CH3 CHOICES ──
+  if(a==='c3_morse_done'){
+    clearPuzzle();
+    addMsg('unknown','unknown',"SOS DOCK SEVEN. His last cry for help. Nobody answered.",function(){
+      addMsg('unknown','unknown',"Contact Nadia. She worked at the Presidential Palace. Tell her you know about the flash drive.",function(){
+        S.step=2;autoSave();
+        setChoices([{text:"I'll reach out to Nadia now.",action:'c3_nadia'}]);
+      });
+    });
+  }
+  if(a==='c3_nadia'){
+    S.app='messages';S.chat='nadia';render();
+    setTimeout(function(){
+      addMsg('nadia','naail',"Nadia? It's Naail Ahmed. I know about the flash drive.",function(){
+        addMsg('nadia','nadia',"How did you — who told you about that?",function(){
+          addMsg('nadia','nadia',"...Fine. Zameer was deleting files in his last days. Frantically. I backed up everything I could.",function(){
+            addEv('nadia_flash');
+            addMsg('nadia','nadia',"But the files are encrypted. You'll need someone who can crack forensic accounting data.",function(){
+              addMsg('nadia','nadia',"Dr. Ahmed Shareef. Forensic accountant. He used to work for the Anti-Corruption Commission before they defunded it.",function(){
+                S.step=3;autoSave();
+                setChoices([{text:"Where can I find Dr. Shareef?",action:'c3_shareef'}]);
+              });
+            });
+          });
+        });
+      });
+    },600);
+  }
+  if(a==='c3_shareef'){
+    S.app='messages';S.chat='shareef';render();
+    setTimeout(function(){
+      addMsg('shareef','naail',"Dr. Shareef? I have encrypted financial files from the President's office. I need your help.",function(){
+        addMsg('shareef','shareef',"Naail Ahmed. I've read your work. You're either very brave or very foolish.",function(){
+          addMsg('shareef','shareef',"Send me the files. But I need you to crack the security layer first. It's a lights-out grid puzzle.",function(){
+            S.step=4;autoSave();
+            S.flags.grid=initGrid();
+            setPuzzle('grid','shareef');
+          });
+        });
+      });
+    },600);
+  }
+  if(a==='c3_grid_done'){
+    clearPuzzle();
+    showOv('<div style="font-size:48px;margin-bottom:16px">💾</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#22c55e;margin-bottom:12px">FILES DECRYPTED</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px">Deleted Files Recovered</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">4 shell companies registered same week.<br>Same BVI agent for all registrations.<br>Draft email to international press — Zameer was preparing to leak Fentenoy documents.<br>Burner phone records: 47 calls to Speaker\'s office.</div><button class="btn-primary" onclick="G.doChoice(\'c3_files\')">Continue →</button>');
+    addEv('shareef_audit');addEv('deleted_email');addEv('burner_phone');SFX.success();
+  }
+  if(a==='c3_files'){
+    hideOv();S.app='messages';S.chat='shareef';render();
+    addMsg('shareef','shareef',"Naail, this is bigger than corruption. Four shell companies, all registered in the same week, all through the same agent in the British Virgin Islands.",function(){
+      addMsg('shareef','shareef',"And look at the burner phone records — Zameer called one number 47 times in his final month. That number is registered to the Speaker's office.",function(){
+        addMsg('shareef','shareef',"He was either working with Fulhu... or threatening him.",function(){
+          S.step=5;autoSave();
+          addMsg('shareef','shareef',"Be very careful with this information. People have disappeared for less.",function(){
+            endChapter(3);
+          });
+        });
+      });
+    });
+  }
+
+  // ── CH4 CHOICES ──
+  if(a==='c4_combo_done'){
+    clearPuzzle();
+    showOv('<div style="font-size:48px;margin-bottom:16px">🔓</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#22c55e;margin-bottom:12px">SAFE OPENED</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px">Speaker Fulhu\'s Documents</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">Signed transfer orders routing Fentenoy funds through 3 shell companies.<br>Surveillance reports on President Zameer.<br>A handwritten note: "He knows. Handle it."<br>Orders for police surveillance — signed by Inspector Waheed.</div><button class="btn-primary" onclick="G.doChoice(\'c4_safe\')">Continue →</button>');
+    addEv('fulhu_documents');SFX.tension();S.step=3;autoSave();
+  }
+  if(a==='c4_safe'){
+    hideOv();S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"You found it. Now you need confirmation. Inspector Waheed — he signed those surveillance orders.",function(){
+      addMsg('unknown','unknown',"He's been carrying this guilt. Confront him and he'll break.",function(){
+        S.step=4;autoSave();
+        setChoices([{text:"I'll find Waheed.",action:'c4_waheed'}]);
+      });
+    });
+  }
+  if(a==='c4_waheed'){
+    S.app='messages';S.chat='waheed';render();
+    setTimeout(function(){
+      addMsg('waheed','naail',"Inspector Waheed. I have the surveillance orders you signed — on Fulhu's instructions.",function(){
+        addMsg('waheed','waheed',"...Where did you get those?",function(){
+          setChoices([{text:"That doesn't matter. Tell me what the Speaker ordered.",action:'c4_press'},{text:"I have Fulhu's documents. You can cooperate or go down with him.",action:'c4_threat'}]);
+        });
+      });
+    },600);
+  }
+  if(a==='c4_press'||a==='c4_threat'){
+    addMsg('waheed','naail',a==='c4_press'?"Tell me what the Speaker ordered.":"You can cooperate or go down with him.",function(){
+      addMsg('waheed','waheed',"...God forgive me.",function(){
+        addMsg('waheed','waheed',"The Speaker ordered round-the-clock surveillance on Zameer. His car, his phone, his meetings.",function(){
+          addEv('waheed_confession');
+          addMsg('waheed','waheed',"Fulhu knew Zameer was going to expose Fentenoy. He said he would 'handle the problem.'",function(){
+            addEv('surveillance_log');
+            addMsg('waheed','waheed',"The night Zameer disappeared — my men were ordered to stand down. All units pulled back from the Palace route.",function(){
+              addMsg('waheed','waheed',"I didn't know what would happen. I swear I didn't know.",function(){
+                endChapter(4);
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  // ── CH5 CHOICES ──
+  if(a==='c5_start'){
+    addMsg('unknown','naail',"What do you mean?",function(){
+      addMsg('unknown','unknown',"Your apartment was broken into. Professional job. Laptop searched, files copied.",function(){
+        addEv('leena_breakin');
+        addMsg('unknown','unknown',"Your neighbor Leena saw them leave. Talk to her, then I have something for you to decode.",function(){
+          setChoices([{text:"I'll talk to Leena.",action:'c5_leena'}]);
+        });
+      });
+    });
+  }
+  if(a==='c5_leena'){
+    S.app='messages';S.chat='leena';render();
+    setTimeout(function(){
+      addMsg('leena','naail',"Leena — someone broke into my apartment. Did you see anything?",function(){
+        addMsg('leena','leena',"Naail! Yes — two men in dark clothes. They had a key somehow. Very calm, very professional.",function(){
+          addMsg('leena','leena',"One of them was carrying a laptop bag when they left. They drove off in a black SUV — government plates.",function(){
+            addMsg('leena','leena',"Please be careful. These are not normal thieves.",function(){
+              S.app='messages';S.chat='unknown';render();
+              addMsg('unknown','unknown',"Now decode this. It was found in the metadata of the surveillance file from Waheed:",function(){
+                addMsg('unknown','unknown',"01000100 01001111 01000011 01001011 00110111",function(){
+                  S.step=2;autoSave();
+                  setPuzzle('binary','unknown');
+                });
+              });
+            });
+          });
+        });
+      });
+    },600);
+  }
+  if(a==='c5_binary_done'){
+    clearPuzzle();
+    showOv('<div style="font-size:48px;margin-bottom:16px">⚠️</div><div style="font-family:\'Playfair Display\',serif;font-size:24px;font-weight:700;color:#f87171;margin-bottom:16px">WARNING</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">DOCK7 — again. Every thread leads back to the harbor.<br><br>They broke into your home. They know what you have.<br><br>Major Asad — MNDF liaison to Dock 7 — might be willing to talk. But approaching military is dangerous.</div><button class="btn-primary" onclick="G.doChoice(\'c5_approach\')">Continue →</button>');
+    addEv('binary_decoded');SFX.warn();S.step=3;autoSave();
+  }
+  if(a==='c5_approach'){
+    hideOv();S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"Major Asad ran logistics at Dock 7 the night Zameer disappeared. He's been drinking heavily since.",function(){
+      setChoices([{text:"I'll approach him directly — no time for caution.",action:'c5_direct'},{text:"I'll be cautious — arrange a quiet meeting.",action:'c5_cautious'}]);
+    });
+  }
+  if(a==='c5_direct'){
+    S.flags.approach='direct';
+    addMsg('unknown','naail',"I'll approach him directly.",function(){
+      addMsg('unknown','unknown',"Bold. He'll be at the Rasfannu waterfront tonight. He drinks alone.",function(){
+        showOv('<div class="jm" style="font-size:11px;color:#475569;letter-spacing:4px;margin-bottom:16px">RASFANNU WATERFRONT — 10:30 PM</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:24px">Salt spray. Distant traffic. A man in civilian clothes sits on the seawall, a bottle beside him. Even in the dark, you can see his hands shaking.</div><button class="btn-primary" onclick="G.doChoice(\'c5_asad\')">Confront Asad →</button>');
+      });
+    });
+  }
+  if(a==='c5_cautious'){
+    S.flags.approach='cautious';
+    addMsg('unknown','naail',"I'll arrange a quiet meeting.",function(){
+      addMsg('unknown','unknown',"Smart. I'll send him a message from a mutual contact. Meet at the fish market, 5 AM. Familiar territory for you.",function(){
+        showOv('<div class="jm" style="font-size:11px;color:#475569;letter-spacing:4px;margin-bottom:16px">CHAANDHANEE MAGU — 5:00 AM</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:320px;margin-bottom:24px">The fish market again. Before dawn. A uniformed man waits by the third stall, arms crossed. He looks like he hasn\'t slept in days.</div><button class="btn-primary" onclick="G.doChoice(\'c5_asad\')">Approach Asad →</button>');
+      });
+    });
+  }
+  if(a==='c5_asad'){
+    hideOv();S.app='messages';S.chat='asad';S.step=4;autoSave();render();
+    setTimeout(function(){
+      addMsg('asad','naail',"Major Asad. I know you were at Dock 7 the night President Zameer disappeared.",function(){
+        addMsg('asad','asad',"...",function(){
+          addMsg('asad','asad',"You have no idea what you're walking into.",function(){
+            var tone=S.flags.approach==='direct'?"I have documents, surveillance logs, and testimony. Talk now or talk to the press.":"People are getting hurt. You can end this. Tell me what happened at Dock 7.";
+            addMsg('asad','naail',tone,function(){
+              addMsg('asad','asad',"...I was following orders. We all were.",function(){
+                addMsg('asad','asad',"That night — 2 AM — I was told to bring a vehicle to Dock 7. The silver Camry.",function(){
+                  addMsg('asad','asad',"When I arrived, there was a man. Unconscious. Being carried by two people I didn't recognize.",function(){
+                    addEv('asad_testimony');
+                    addMsg('asad','asad',"They put him in the trunk. I drove to the jetty on the east side. A boat was waiting.",function(){
+                      addMsg('asad','naail',"Was it Zameer? Was the man President Zameer?",function(){
+                        addMsg('asad','asad',"I... I don't know. It was dark. But the car — there was blood in the trunk afterward.",function(){
+                          addEv('blood_evidence');
+                          addMsg('asad','asad',"The GPS was never wiped. Dock 7 to the east jetty to Velana cargo terminal.",function(){
+                            addEv('gps_route');S.step=5;autoSave();
+                            addMsg('asad','asad',"Whatever you do with this — leave my name out of it. They'll kill me.",function(){
+                              endChapter(5);
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    },600);
+  }
+
+  // ── CH6 CHOICES ──
+  if(a==='c6_coords_done'){
+    clearPuzzle();
+    showOv('<div style="font-size:48px;margin-bottom:16px">🏝️</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#22c55e;margin-bottom:12px">LOCATION IDENTIFIED</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px">Kudafinolhu Island</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">A private island in the South Malé Atoll.<br><br>Registered to Ahmed Rilwan — Speaker Fulhu\'s brother-in-law.<br><br>Satellite imagery shows a recently constructed compound with security perimeter. The island was listed as "uninhabited" on official records until six months ago.</div><button class="btn-primary" onclick="G.doChoice(\'c6_island\')">Continue →</button>');
+    addEv('island_id');SFX.tension();S.step=3;autoSave();
+  }
+  if(a==='c6_island'){
+    hideOv();S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"Zameer is alive. Held on Fulhu's family island. But there's something else you need to see.",function(){
+      addMsg('unknown','unknown',"Remember Zameer's phone? There's a hidden partition. Most forensic tools miss it.",function(){
+        addMsg('unknown','unknown',"Access the president's phone. Go to Notes. Tap the encrypted dossier header 3 times to reveal the hidden partition.",function(){
+          S.step=4;autoSave();S.flags.partition_hint=true;
+          setChoices([{text:"I'll check the hidden partition now.",action:'c6_partition'}]);
+        });
+      });
+    });
+  }
+  if(a==='c6_partition'){
+    showOv('<div style="font-size:48px;margin-bottom:16px">📱</div><div class="jm" style="font-size:11px;letter-spacing:4px;color:#f87171;margin-bottom:12px">HIDDEN PARTITION ACCESSED</div><div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;margin-bottom:16px;color:#f87171">The Truth About Zameer</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:340px;margin-bottom:32px">Voice memo, Feb 4:<br><br><em>"The Fentenoy deal was my idea. I approved every transfer. Fulhu is my partner, not my enemy. But $26 million — that was supposed to be split equally. He\'s taking more than his share.<br><br>If he won\'t honor our agreement, I\'ll burn it all down. I\'ll go to the press and play the hero. Let them think I was the whistleblower."</em><br><br>Zameer wasn\'t a victim. He was a co-conspirator who got greedy.</div><button class="btn-primary" onclick="G.doChoice(\'c6_truth\')">Continue →</button>');
+    addEv('zameer_approved');SFX.drama();S.step=5;autoSave();
+  }
+  if(a==='c6_truth'){
+    hideOv();S.app='messages';S.chat='unknown';render();
+    addMsg('unknown','unknown',"Now you know. Zameer isn't the hero anyone thinks. He built Fentenoy. He profited from it.",function(){
+      addMsg('unknown','unknown',"Fulhu didn't abduct an innocent man. He silenced a blackmailer who was about to betray their deal.",function(){
+        addMsg('unknown','unknown',"Both of them are guilty, Naail. But only you know the full truth.",function(){
+          addMsg('unknown','unknown',"Rest tonight. Tomorrow, we end this.",function(){
+            endChapter(6);
+          });
+        });
+      });
+    });
+  }
+
+  // ── CH7 CHOICES ──
+  if(a==='c7_expose'){
+    S.flags.ending=1;
+    addMsg('unknown','naail',"The full truth. All of it. Zameer and Fulhu both face justice.",function(){
+      addMsg('unknown','unknown',"The hardest choice. And the right one.",function(){
+        showOv('<div style="font-size:48px;margin-bottom:24px">⚖️</div><div style="font-family:\'Playfair Display\',serif;font-size:22px;font-weight:900;margin-bottom:16px;color:#0ea5e9">ENDING 1: THE FULL TRUTH</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:360px;margin-bottom:32px">You publish everything.<br><br>The Fentenoy dossier. The shell companies. Zameer\'s voice memo admitting his role. Fulhu\'s abduction order. The blood in the Camry. The island prison.<br><br>Within 48 hours, the Speaker is arrested. A naval operation recovers Zameer from Kudafinolhu — alive, but diminished. He faces charges alongside Fulhu.<br><br>The Maldives is shaken. Two of its most powerful leaders, exposed as co-conspirators. The harbor contract is voided. International monitors are called in.<br><br>You win the Pulitzer. You also receive three more death threats.<br><br>But for the first time in years, the people of Malé walk the streets knowing the truth. And truth, however painful, is the foundation of a free republic.</div><button class="btn-primary" onclick="G.doChoice(\'c7_final\')">Complete the Story →</button>');
+        SFX.success();
+      });
+    });
+  }
+  if(a==='c7_protect'){
+    S.flags.ending=2;
+    addMsg('unknown','naail',"Only expose Fulhu. The country needs its President back — even a flawed one.",function(){
+      addMsg('unknown','unknown',"A political choice. Pragmatic. But is it just?",function(){
+        showOv('<div style="font-size:48px;margin-bottom:24px">🛡️</div><div style="font-family:\'Playfair Display\',serif;font-size:22px;font-weight:900;margin-bottom:16px;color:#fbbf24">ENDING 2: THE MERCIFUL LIE</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:360px;margin-bottom:32px">You publish a carefully edited version of the truth.<br><br>Speaker Fulhu is exposed as the sole architect of the Fentenoy corruption and the mastermind behind the President\'s abduction. Zameer is painted as the victim — a leader who discovered the theft and paid the price.<br><br>Fulhu is arrested. Zameer is rescued from Kudafinolhu to a hero\'s welcome. He returns to power with a mandate of reform.<br><br>You know the real story. Zameer knows you know. He calls you once — "Thank you, Naail. The Maldives needs stability." You hang up without responding.<br><br>The harbor deal is restructured under new oversight. Some of the stolen money is recovered. Most isn\'t.<br><br>You keep your source\'s trust. And you keep your silence about a President who built the very corruption he pretended to fight.</div><button class="btn-primary" onclick="G.doChoice(\'c7_final\')">Complete the Story →</button>');
+        SFX.tension();
+      });
+    });
+  }
+  if(a==='c7_unmask'){
+    S.flags.ending=3;
+    addMsg('unknown','naail',"Before I publish anything — who are you? I won't go forward without knowing my source.",function(){
+      addMsg('unknown','unknown',"...",function(){
+        addMsg('unknown','unknown',"You really want to know?",function(){
+          addMsg('unknown','naail',"I need to know. A journalist's obligation is to the truth — all of it.",function(){
+            addMsg('unknown','unknown',"Very well.",function(){
+              addMsg('unknown','unknown',"My name is Mariyam Dhiye. The First Lady of the Maldives.",function(){
+                showOv('<div style="font-size:48px;margin-bottom:24px">👤</div><div style="font-family:\'Playfair Display\',serif;font-size:22px;font-weight:900;margin-bottom:16px;color:#f472b6">ENDING 3: THE FIRST LADY\'S GAMBIT</div><div style="font-size:14px;color:#94a3b8;line-height:1.8;max-width:360px;margin-bottom:32px">Unknown was Mariyam Dhiye. Zameer\'s wife.<br><br>She discovered the Fentenoy scheme months ago. When Zameer confessed his role, she gave him an ultimatum: go public, or she would. He chose silence. Fulhu chose violence.<br><br>After the abduction, Mariyam didn\'t go to the police. She went to you — the only journalist in Malé who couldn\'t be bought.<br><br>She wanted both men exposed. Her husband, the corrupt President. The Speaker, the kidnapper. She wanted the truth because she believed the Maldives deserved better than either of them.<br><br>"I loved my husband," she tells you. "But I love my country more."<br><br>You publish everything — including her identity. She faces investigation for withholding information. But her children are safe. And the truth is free.<br><br>In the end, the person who brought down two of the most powerful men in the Maldives was the one they both underestimated.</div><button class="btn-primary" onclick="G.doChoice(\'c7_final\')">Complete the Story →</button>');
+                SFX.drama();
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+  if(a==='c7_final'){
+    hideOv();
+    var endings=['','The Full Truth','The Merciful Lie',"The First Lady's Gambit"];
+    var endNum=S.flags.ending||1;
+    var totalEv=S.ev.length;
+    var maxEv=EV_DB.length;
+    var h='<div class="jm" style="font-size:11px;letter-spacing:6px;color:#0ea5e9;margin-bottom:16px">FENTENOY TRIAL</div>';
+    h+='<div style="font-family:\'Playfair Display\',serif;font-size:28px;font-weight:900;margin-bottom:24px">'+esc(endings[endNum])+'</div>';
+    h+='<div style="color:#64748b;font-size:14px;margin-bottom:8px">Evidence collected: '+totalEv+'/'+maxEv+'</div>';
+    var ords=['','1st','2nd','3rd'];h+='<div style="color:#64748b;font-size:14px;margin-bottom:32px">'+ords[endNum]+' Ending</div>';
+    h+='<div style="font-size:48px;margin-bottom:24px">🇲🇻</div>';
+    h+='<div style="font-family:\'Playfair Display\',serif;font-size:18px;font-weight:700;margin-bottom:8px;color:#e2e8f0">THANK YOU FOR PLAYING</div>';
+    h+='<div style="font-size:13px;color:#475569;line-height:1.8;max-width:340px;margin-bottom:32px">The Fentenoy Trial is a work of fiction. All characters and events are entirely imaginary.<br><br>But the questions it asks — about truth, power, corruption, and the courage it takes to expose them — are very real.</div>';
+    h+='<button class="btn-ghost" style="margin-top:8px" onclick="G.showEvOv()">Review All Evidence</button>';
+    $('chend-content').innerHTML=h;showScene('chend');SFX.success();autoSave();
+    // Epilogue glitch after 20 seconds
+    S.flags.complete=true;save();setTimeout(function(){_runEpilogue()},10000);
+  }
+}
+
+// ═══ PUZZLE CHECKER ═══
+function checkPuzzle(){
+  var el=document.querySelector('.puzzle-input');if(!el)return;
+  var val=el.value.trim();if(!val)return;
+
+  if(S.puzzle==='cipher'){
+    var u=val.toUpperCase();
+    if(u.indexOf('THE PRESIDENT KNEW')!==-1&&u.indexOf('THE HARBOR HOLDS THE TRUTH')!==-1){
+      SFX.success();S.ps.cipher=true;
+      addMsg('unknown','naail',u,function(){addMsg('unknown','unknown',"Correct. You're sharper than most.",function(){doChoice('c1_cipher')})});return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='math'){
+    if(parseInt(val)===51){SFX.success();S.ps.math=true;doChoice('c1_math');return}
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='riddle'){
+    var lo=val.toLowerCase();
+    if(lo.indexOf('speaker')!==-1||lo.indexOf('majlis')!==-1||lo.indexOf('parliament')!==-1||lo.indexOf('fulhu')!==-1){
+      SFX.success();S.ps.riddle=true;
+      addMsg('unknown','naail',val,function(){doChoice('c1_riddle')});return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='sequence'){
+    if(parseInt(val)===29){SFX.success();S.ps.sequence=true;doChoice('c2_cctv');return}
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='anagram'){
+    var up=val.toUpperCase().replace(/\s+/g,'');
+    if(up==='ORCHIDMAGU'){
+      SFX.success();S.ps.anagram=true;
+      addMsg('unknown','naail','ORCHID MAGU',function(){
+        addMsg('unknown','unknown',"Orchid Magu. The harbor district. That's where the trail leads.",function(){doChoice('c2_harbor')});
+      });return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='morse'){
+    var up2=val.toUpperCase().replace(/\s+/g,'');
+    if(up2.indexOf('SOSDOCKSEVEN')!==-1||up2==='SOSDOCK7'){
+      SFX.success();S.ps.morse=true;
+      addMsg('unknown','naail','SOS DOCK SEVEN',function(){doChoice('c3_morse_done')});return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='combo'){
+    var clean=val.replace(/[\s\-,]+/g,'');
+    if(clean==='372'){
+      SFX.success();S.ps.combo=true;
+      addMsg('unknown','naail','3-7-2',function(){doChoice('c4_combo_done')});return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='binary'){
+    var up3=val.toUpperCase().replace(/\s+/g,'');
+    if(up3==='DOCK7'){
+      SFX.success();S.ps.binary=true;
+      addMsg('unknown','naail','DOCK7',function(){doChoice('c5_binary_done')});return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  if(S.puzzle==='coords'){
+    var lo=val.toLowerCase().replace(/\s+/g,'');
+    // Accept: kudafinolhu, 3.8650/73.4583, variations
+    if(lo.indexOf('kudafinolhu')!==-1||lo.indexOf('kudafinolh')!==-1||lo.indexOf('kuda finolhu')!==-1||(lo.indexOf('3.86')!==-1&&lo.indexOf('73.45')!==-1)){
+      SFX.success();S.ps.coords=true;
+      addMsg('unknown','naail',val,function(){
+        addMsg('unknown','unknown',"Kudafinolhu. A private island. Owned by Speaker Fulhu's brother-in-law.",function(){
+          doChoice('c6_coords_done');
+        });
+      });return;
+    }
+    SFX.error();shakeEl('phone-body');return;
+  }
+  SFX.error();shakeEl('phone-body');
+}
+
+// ═══ BRIGHTNESS ═══
+function adjustBr(val,pid){
+  S.brightness=+val;
+  var p=Z_PHOTOS.find(function(x){return x.id===pid});
+  if(p&&p.clue&&S.brightness>=p.revealAt&&!S.ps['ph_'+pid]){
+    S.ps['ph_'+pid]=true;
+    if(pid===3)addEv('dock7_photo');
+    if(pid===5)addEv('license_plate');
+  }
+  render();
+}
+
+// ═══ GRID PUZZLE ═══
+function initGrid(){
+  // Create a solvable 4x4 lights-out puzzle
+  var g=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  // Apply random moves to create a solvable state
+  var moves=[[1,4],[0,2,5],[1,3,6],[2,7],[0,5,8],[1,4,6,9],[2,5,7,10],[3,6,11],[4,9,12],[5,8,10,13],[6,9,11,14],[7,10,15],[8,13],[9,12,14],[10,13,15],[11,14]];
+  // Make ~6 random toggles to create puzzle
+  for(var i=0;i<6;i++){
+    var pos=Math.floor(Math.random()*16);
+    [pos].concat(moves[pos]).forEach(function(p){g[p]=g[p]?0:1});
+  }
+  // Ensure not already solved
+  if(g.every(function(v){return v===0})){g[0]=1;g[1]=1;g[4]=1;g[5]=1}
+  return g;
+}
+
+function toggleGrid(idx){
+  if(!S.flags.grid)return;
+  SFX.click();
+  var g=S.flags.grid;
+  var adj=[[1,4],[0,2,5],[1,3,6],[2,7],[0,5,8],[1,4,6,9],[2,5,7,10],[3,6,11],[4,9,12],[5,8,10,13],[6,9,11,14],[7,10,15],[8,13],[9,12,14],[10,13,15],[11,14]];
+  [idx].concat(adj[idx]).forEach(function(p){g[p]=g[p]?0:1});
+  render();
+  // Check if solved (all off)
+  if(g.every(function(v){return v===0})){
+    S.ps.grid=true;
+    setTimeout(function(){SFX.success();doChoice('c3_grid_done')},400);
+  }
+}
+
+// ═══ RENDER ═══
+function render(){
+  var t=$('sb-time');if(t)t.textContent=timeStr();
+  var lbl=$('sb-label');
+  if(lbl){lbl.textContent=S.phone==='president'?"ZAMEER'S PHONE":"YOUR PHONE";lbl.className='phone-label '+(S.phone==='president'?'pres':'yours')}
+
+  var ty=$('tab-yours'),tp=$('tab-pres');
+  if(ty)ty.className=S.phone==='yours'?'sel-yours':'';
+  if(tp){if(S.ps.pin){tp.disabled=false;tp.textContent="📱 Zameer's Phone";tp.className=S.phone==='president'?'sel-pres':''}else{tp.className=''}}
+
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+  if(S.app==='home')$('nav-home').classList.add('active');
+  else if(S.app.indexOf('message')!==-1)$('nav-chat').classList.add('active');
+  else if(S.app==='evidence')$('nav-ev').classList.add('active');
+
+  var body=$('phone-body');if(!body)return;
+  var vk=S.phone+'/'+S.app+'/'+(S.chat||'');
+  var isChat=S.chat&&(S.app==='messages'||S.app==='p_messages');
+  if(isChat&&vk===_rv){_patchChat(body);return}
+  var html;
+  switch(S.app){
+    case'home':html=rHome();break;
+    case'messages':html=S.chat?rChat(false):rChatList(false);break;
+    case'evidence':html=rEvidence();break;
+    case'notes':html=rNotes(false);break;
+    case'browser':html=rBrowser();break;
+    case'p_messages':html=S.chat?rChat(true):rChatList(true);break;
+    case'p_gallery':html=S.photo?rPhotoView():rGallery();break;
+    case'p_notes':html=rNotes(true);break;
+    case'p_email':html=rEmail();break;
+    default:html=rHome();break;
+  }
+  body.innerHTML=html;_rv=vk;_mc=(isChat?(S.msgs[S.chat]||[]).length:0);scrollChat();
+}
+
+function _patchChat(body){
+  var isP=S.app==='p_messages';
+  var msgs=isP?(Z_MSGS[S.chat]||[]):(S.msgs[S.chat]||[]);
+  var area=body.querySelector('.msg-area');
+  if(!area){_rv='';render();return}
+  // Remove old typing
+  var typ=area.querySelector('.typing');if(typ)typ.remove();
+  // Append only new messages
+  for(var i=_mc;i<msgs.length;i++){
+    var m=msgs[i];var isSent=isP?(m.f==='zameer'):(m.f==='naail');
+    var div=document.createElement('div');div.className='bubble '+(isSent?'sent':'recv');
+    div.innerHTML=esc(m.t)+'<span class="ts">'+(m.ti||'')+'</span>';
+    area.appendChild(div);
+  }
+  _mc=msgs.length;
+  // Add typing
+  if(S.typing&&S.typing!=='naail'){var t=document.createElement('div');t.className='typing';t.innerHTML='<span style="animation:blink 1s infinite">\u2022 \u2022 \u2022</span>';area.appendChild(t)}
+  // Update footer
+  var oldC=body.querySelector('.choices');if(oldC)oldC.remove();
+  var oldP=body.querySelector('.puzzle-box');if(oldP)oldP.remove();
+  if(S.choices.length&&!isP&&_activeChat===S.chat){var cd=document.createElement('div');cd.className='choices';S.choices.forEach(function(ch){var btn=document.createElement('button');btn.className='choice-btn';btn.textContent=ch.text;btn.setAttribute('onclick',"G.doChoice('"+ch.action+"')");cd.appendChild(btn)});body.appendChild(cd)}
+  if(!isP&&S.puzzle&&S.puzzleChat===S.chat){var ph=_puzzleHtml();if(ph){var w=document.createElement('div');w.innerHTML=ph;if(w.firstChild)body.appendChild(w.firstChild)}}
+  scrollChat();
+}
+
+function _puzzleHtml(){
+  var labels={cipher:'DECODE THE MESSAGE (ALL CAPS):',math:'ENTER THE NUMBER:',riddle:'WHO IS IT?',sequence:'ENTER THE NEXT NUMBER:',anagram:'UNSCRAMBLE THE LOCATION:',morse:'DECODE THE MORSE CODE:',combo:'ENTER THE COMBINATION (X-X-X):',binary:'DECODE THE BINARY (ASCII):',coords:'IDENTIFY THE LOCATION:'};
+  var phs={cipher:'THE PRESIDENT KNEW...',math:'Enter number...',riddle:'Your answer...',sequence:'Next number in sequence...',anagram:'Street name...',morse:'SOS DOCK...',combo:'3-7-2',binary:'Type the decoded text...',coords:'Island name or decimal coords...'};
+  if(S.puzzle==='grid'){var h='<div class="puzzle-box"><div class="puzzle-label">LIGHTS OUT \u2014 TURN ALL CELLS OFF</div>';if(S.flags.grid){h+='<div class="grid-puzzle">';S.flags.grid.forEach(function(v,i){h+='<div class="grid-cell '+(v?'on':'off')+'" onclick="G.toggleGrid('+i+')">'+(v?'\u25cf':'\u25cb')+'</div>'});h+='</div>'}h+=renderHints()+'</div>';return h}
+  var label=labels[S.puzzle];
+  if(label)return'<div class="puzzle-box"><div class="puzzle-label">'+label+'</div><div class="puzzle-row"><input class="puzzle-input" placeholder="'+(phs[S.puzzle]||'...')+'" onkeydown="if(event.key===\'Enter\')G.checkPuzzle()"><button class="puzzle-go" onclick="G.checkPuzzle()">\u2192</button></div>'+renderHints()+'</div>';
+  return'';
+}
+
+function rHome(){
+  var isP=S.phone==='president';
+  var apps;
+  if(isP){apps=[{e:'💬',n:'Messages',a:'p_messages'},{e:'📷',n:'Gallery',a:'p_gallery'},{e:'📋',n:'Notes',a:'p_notes'},{e:'📧',n:'Email',a:'p_email'}]}
+  else{var mc=Object.keys(S.msgs).length;apps=[{e:'💬',n:'Messages',a:'messages',b:mc},{e:'🔍',n:'Evidence',a:'evidence',b:S.ev.length},{e:'📋',n:'Notes',a:'notes'},{e:'🌐',n:'Browser',a:'browser'}]}
+  var h='<div class="home-header"><div class="clock">'+timeStr()+'</div><div class="date">'+dateStr()+'</div></div><div class="app-grid">';
+  apps.forEach(function(a){h+='<div class="app-icon" onclick="G.navApp(\''+a.a+'\')"><span class="ico">'+a.e+'</span>'+esc(a.n);if(a.b>0)h+='<span class="app-badge">'+a.b+'</span>';h+='</div>'});
+  h+='</div>';
+  if(!isP&&S.step>=1&&OBJECTIVES[S.ch]&&OBJECTIVES[S.ch][S.step])h+='<div class="objective-box"><div class="lbl">CH'+S.ch+' — OBJECTIVE</div><div class="txt">'+esc(OBJECTIVES[S.ch][S.step])+'</div></div>';
+  return h;
+}
+
+function rChatList(isP){
+  var chats;
+  if(isP){chats=Object.keys(Z_MSGS).map(function(k){var c=CHARS[k]||{name:k,color:'#666',ini:'?'};var msgs=Z_MSGS[k];var last=msgs[msgs.length-1];return{id:k,name:c.name,last:last.t,time:last.ti,color:c.color,ini:c.ini}})}
+  else{chats=Object.keys(S.msgs).map(function(k){var c=CHARS[k]||{name:k,color:'#666',ini:'?'};var msgs=S.msgs[k];if(!msgs||!msgs.length)return null;var last=msgs[msgs.length-1];return{id:k,name:c.name,last:last.t,time:last.ti,color:c.color,ini:c.ini}}).filter(Boolean)}
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Messages</div></div><div style="flex:1;overflow-y:auto">';
+  if(!chats.length)h+='<div class="empty"><div class="ico">💬</div>No messages yet.</div>';
+  else chats.forEach(function(c){h+='<div class="chat-row" onclick="G.openChat(\''+c.id+'\')"><div class="avatar" style="background:linear-gradient(135deg,'+c.color+',#1e293b)">'+c.ini+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:14px">'+esc(c.name)+'</span><span style="font-size:11px;color:#64748b">'+c.time+'</span></div><div style="font-size:13px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.last)+'</div></div></div>'});
+  return h+'</div>';
+}
+
+function rChat(isP){
+  var cid=S.chat;if(!cid)return rChatList(isP);
+  var ch=CHARS[cid]||{name:cid,color:'#666',ini:'?'};
+  var msgs=isP?(Z_MSGS[cid]||[]):(S.msgs[cid]||[]);
+
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.openChat(null)">←</button><div class="avatar-sm" style="background:linear-gradient(135deg,'+ch.color+',#1e293b)">'+ch.ini+'</div><div><div style="font-weight:600;font-size:14px">'+esc(ch.name)+'</div><div style="font-size:11px;color:#64748b">'+(S.typing&&S.typing!=='naail'?'typing...':'online')+'</div></div></div><div class="msg-area">';
+  msgs.forEach(function(m){
+    var isSent=isP?(m.f==='zameer'):(m.f==='naail');
+    h+='<div class="bubble '+(isSent?'sent':'recv')+'">'+esc(m.t)+'<span class="ts">'+(m.ti||'')+'</span></div>';
+  });
+  if(S.typing&&S.typing!=='naail')h+='<div class="typing"><span style="animation:blink 1s infinite">• • •</span></div>';
+  h+='</div>';
+
+  // Puzzle input — only in correct chat
+  if(!isP&&S.puzzle&&S.puzzleChat===cid){h+=_puzzleHtml()}
+  // Choices — only in active conversation chat
+  else if(S.choices.length&&!isP&&_activeChat===cid){h+='<div class="choices">';S.choices.forEach(function(ch){h+='<button class="choice-btn" onclick="G.doChoice(\''+ch.action+'\')">'+ esc(ch.text)+'</button>'});h+='</div>'}
+  return h;
+}
+
+function rEvidence(){
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Evidence Board</div><div class="jm" style="font-size:12px;color:#0ea5e9;margin-left:auto">'+S.ev.length+' items</div></div><div style="padding:16px;overflow-y:auto">';
+  if(!S.ev.length)h+='<div class="empty"><div class="ico">🔍</div>No evidence yet.<div style="font-size:12px;margin-top:8px">Explore to find clues.</div></div>';
+  else S.ev.forEach(function(e,i){h+='<div class="ev-item"><div class="ev-id">#'+(i+1)+' — '+esc(e.t)+'</div><div class="ev-desc">'+esc(e.d)+'</div></div>'});
+  return h+'</div>';
+}
+
+function rGallery(){
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Gallery</div></div><div class="gallery">';
+  Z_PHOTOS.forEach(function(p){h+='<div class="gal-item'+(p.clue?' clue':'')+'" onclick="S.photo='+p.id+';S.brightness='+p.br+';G.render()"><span style="font-size:28px;opacity:'+(p.br/100)+'">📷</span><span style="font-size:10px;color:#64748b;text-align:center">'+(p.clue?'🔍 Analyze':'Photo '+p.id)+'</span></div>'});
+  return h+'</div>';
+}
+
+function rPhotoView(){
+  var p=Z_PHOTOS.find(function(x){return x.id===S.photo});if(!p)return rGallery();
+  var revealed=p.clue&&S.brightness>=p.revealAt;
+  var alpha=S.brightness/100;
+  var h='<div class="app-hdr"><button class="back-btn" onclick="S.photo=null;G.render()">←</button><div style="font-weight:600;font-size:14px">Photo '+p.id+'</div></div><div style="padding:16px;display:flex;flex-direction:column;gap:16px">';
+  h+='<div style="width:100%;aspect-ratio:4/3;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #1e293b;position:relative;background:#0a0a0f">';
+  h+='<img src="'+p.img+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness('+(S.brightness/100)+') contrast('+(0.5+S.brightness/200)+')" onerror="">';
+  if(revealed)h+='<div style="padding:20px;text-align:center;animation:fadeIn .5s"><div class="jm" style="font-size:11px;color:#0ea5e9;font-weight:700;margin-bottom:8px">🔍 EVIDENCE REVEALED</div><div style="font-size:14px;line-height:1.6">'+esc(p.reveal)+'</div></div>';
+  else{h+='<div style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px;opacity:'+alpha+'">📷</div><div style="font-size:13px;color:rgba(226,232,240,'+Math.max(.15,S.brightness/120)+');line-height:1.5">'+esc(p.desc)+'</div>';if(p.clue)h+='<div style="font-size:11px;color:#475569;margin-top:8px">Adjust brightness to reveal clues...</div>';h+='</div>'}
+  h+='</div>';
+  if(p.clue)h+='<div><div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:8px"><span>Brightness</span><span>'+S.brightness+'%</span></div><input type="range" class="brightness-slider" min="0" max="100" value="'+S.brightness+'" oninput="G.adjustBr(this.value,'+p.id+')"></div>';
+
+  // Continue button when both photos found
+  if(S.ch===1&&S.step===4&&S.ps['ph_3']&&S.ps['ph_5'])h+='<button class="btn-primary" style="width:100%" onclick="G.doChoice(\'c1_photo\')">Continue Investigation →</button>';
+  else if(S.ch===1&&S.step===4&&revealed)h+='<div style="font-size:12px;color:#64748b;text-align:center;padding:8px">Find all photo clues to continue...</div>';
+  return h+'</div>';
+}
+
+function rNotes(isP){
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Notes</div></div><div style="padding:16px;overflow-y:auto">';
+  if(!isP&&S.phone==='yours'){
+    if(S.ev.length===0){h+='<div class="empty"><div class="ico">📋</div>Investigation notes will appear as you progress.</div>'}
+    else{
+      h+='<div class="note-card"><div style="font-size:12px;color:#0ea5e9;margin-bottom:10px;font-weight:600">📋 INVESTIGATION JOURNAL</div>';
+      var ns=[];
+      if(S.ps.pin)ns.push('President Zameer\'s phone recovered from Chaandhanee Magu. PIN: 1965. Contains messages, photos, encrypted files pointing to harbor corruption.');
+      if(S.ps.cipher)ns.push('Decoded cipher: "THE PRESIDENT KNEW. THE HARBOR HOLDS THE TRUTH." Unknown source directing investigation toward harbor.');
+      if(S.ps.math)ns.push('Fentenoy Dossier decrypted: $217M harbor contract, $26M missing through Cyan Atoll Ltd (BVI). Linked to Speaker Fulhu\'s brother-in-law.');
+      if(S.ev.some(function(e){return e.id==="cafe_receipt"}))ns.push('Caf\u00e9 Raalhugandu: Zameer visited 3x in final week. CCTV shows meeting with unidentified woman. Trail leads to Orchid Magu harbor district.');
+      if(S.ev.some(function(e){return e.id==="nadia_flash"}))ns.push('Nadia\'s flash drive: Zameer was frantically deleting files. Dr. Shareef found 4 shell companies, draft press leak, 47 calls to Speaker\'s office.');
+      if(S.ev.some(function(e){return e.id==="fulhu_documents"}))ns.push('Speaker\'s safe: Transfer orders, surveillance on Zameer. Waheed confirmed Fulhu ordered police stand-down the night of disappearance.');
+      if(S.ev.some(function(e){return e.id==="blood_evidence"}))ns.push('Apartment broken into. Asad confessed: unconscious person loaded into Camry at Dock 7. Blood in trunk. GPS: Dock 7 \u2192 east jetty \u2192 Velana terminal.');
+      if(S.ev.some(function(e){return e.id==="zameer_approved"}))ns.push('\u26a0\ufe0f CRITICAL: Zameer is ALIVE on Kudafinolhu island. Hidden phone partition reveals he personally APPROVED Fentenoy. Both men guilty.');
+      ns.forEach(function(n,i){h+='<div style="font-size:13px;color:'+(n.indexOf('\u26a0')===-1?'#cbd5e1':'#f87171')+';line-height:1.7;margin-bottom:12px;padding-bottom:12px;'+(i<ns.length-1?'border-bottom:1px solid #1e293b':'')+'">'+n+'</div>'});
+      h+='</div>';
+    }
+    return h+'</div>';
+  }
+  if(isP||S.phone==='president'){
+    h+='<div class="note-card"><div style="font-size:12px;color:#64748b;margin-bottom:8px">Feb 7 — Personal</div><div style="font-size:14px;line-height:1.7;color:#cbd5e1">Can\'t sleep. The Fentenoy deal closes Thursday. If the files go public, everything falls apart.<br><br>Someone is skimming. Tens of millions. And I think I know who.</div></div>';
+    h+='<div class="note-card encrypted"><div style="font-size:12px;color:#f87171;margin-bottom:8px">🔒 ENCRYPTED — Fentenoy Dossier</div>';
+    if(S.ps.math)h+='<div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">FENTENOY PROJECT — CONFIDENTIAL</div><div style="font-size:14px;line-height:1.7;color:#cbd5e1">Harbor expansion: $217M USD<br>Contractor: Malé Maritime Holdings<br>Beneficiary: Cyan Atoll Ltd (BVI)<br>Directors linked to Speaker Fulhu\'s brother-in-law<br>Kickback: 12% → $26M unaccounted<br><br>Names: Speaker Fulhu, Min. of Transport, Cmdr. Shakir<br>My decision: [entry ends abruptly]</div>';
+    else h+='<div class="jm" style="font-size:13px;color:#64748b">▓▓▓▓▓▓▓ LOCKED ▓▓▓▓▓▓▓<br>Requires decryption key.</div>';
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+
+function rEmail(){
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Email</div></div><div style="padding:16px;overflow-y:auto">';
+  h+='<div class="note-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-weight:600;font-size:14px">Ministry of Finance</span><span style="font-size:11px;color:#64748b">Feb 6</span></div><div style="font-size:13px;color:#0ea5e9;margin-bottom:4px">RE: Fentenoy Phase 2 Budget Approval</div><div style="font-size:13px;color:#64748b;line-height:1.6">Total allocation: MVR 3.34B. Disbursement begins Thursday. Final sign-off pending your review.</div></div>';
+  h+='<div class="note-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-weight:600;font-size:14px">Anonymous</span><span style="font-size:11px;color:#64748b">Feb 5</span></div><div style="font-size:13px;color:#f87171;margin-bottom:4px">You are being watched.</div><div style="font-size:13px;color:#64748b;line-height:1.6">No sender. No signature. Anonymous relay.</div></div>';
+  return h+'</div>';
+}
+
+function rBrowser(){
+  var h='<div class="app-hdr"><button class="back-btn" onclick="G.navApp(\'home\')">←</button><div style="font-weight:600;font-size:16px">Browser</div></div>';
+  h+='<div style="padding:12px"><div class="puzzle-row"><input class="puzzle-input" id="browser-search" placeholder="Search..." onkeydown="if(event.key===\'Enter\')G.browserSearch()"><button class="puzzle-go" onclick="G.browserSearch()">🔍</button></div></div>';
+  h+='<div id="browser-results" style="padding:0 16px;overflow-y:auto">';
+  if(S._browserResults)h+=S._browserResults;
+  else h+='<div class="empty"><div class="ico">🌐</div>Search the web for clues.</div>';
+  h+='</div>';
+  return h;
+}
+function browserSearch(){
+  var el=document.getElementById('browser-search');if(!el||!el.value.trim())return;
+  var q=el.value.trim().toLowerCase();SFX.click();
+  var r='';
+  // Location searches — give full name
+  if(q.indexOf('kudafinolhu')!==-1||q.indexOf('kuda finolhu')!==-1)r='<div class="note-card"><div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">Kudafinolhu Island</div><div style="font-size:13px;color:#94a3b8;line-height:1.7">Private island in South Malé Atoll, Maldives. Coordinates: 3.8650°N, 73.4583°E. Registered owner: Ahmed Rilwan. Classified as uninhabited on official MNDF records.</div></div>';
+  else if(q.indexOf('orchid magu')!==-1)r='<div class="note-card"><div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">Orchid Magu, Malé</div><div style="font-size:13px;color:#94a3b8;line-height:1.7">Street in the harbor district of Malé. Known for commercial warehouses and maritime offices. Several unmarked buildings reported by residents.</div></div>';
+  else if(q.indexOf('dock 7')!==-1||q.indexOf('dock7')!==-1||q.indexOf('harbour')!==-1||q.indexOf('harbor')!==-1&&q.indexOf('male')!==-1)r='<div class="note-card"><div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">Malé Commercial Harbor — Dock 7</div><div style="font-size:13px;color:#94a3b8;line-height:1.7">Restricted cargo dock within Malé Commercial Harbor. Primarily used for government and military logistics. Access requires MNDF clearance.</div></div>';
+  else if(q.indexOf('cafe raalhugandu')!==-1||q.indexOf('raalhugandu')!==-1)r='<div class="note-card"><div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">Café Raalhugandu</div><div style="font-size:13px;color:#94a3b8;line-height:1.7">Small café in central Malé. Known as a meeting spot for journalists and political figures. Back table offers privacy from the street.</div></div>';
+  else if(q.indexOf('vilimale')!==-1||q.indexOf('vilimalé')!==-1)r='<div class="note-card"><div style="font-weight:700;color:#0ea5e9;margin-bottom:8px">Vilimalé</div><div style="font-size:13px;color:#94a3b8;line-height:1.7">Island suburb of Malé, connected by bridge. Residential area popular with families. Beach on the western shore.</div></div>';
+  // Question searches — small hints
+  else if(q.indexOf('fentenoy')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">The Fentenoy Project is a major harbor expansion initiative. Total contract value rumored to be in the hundreds of millions. Several opposition MPs have questioned the procurement process.</div></div>';
+  else if(q.indexOf('cyan atoll')!==-1||q.indexOf('shell company')!==-1||q.indexOf('shell companies')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">BVI-registered shell companies are commonly used in the region for asset protection. Regulatory oversight remains limited for offshore entities linked to government contracts.</div></div>';
+  else if(q.indexOf('speaker')!==-1||q.indexOf('fulhu')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">Speaker of the People\'s Majlis. Powerful political figure with extensive business ties. Brother-in-law reportedly involved in maritime commerce and island development.</div></div>';
+  else if(q.indexOf('zameer')!==-1||q.indexOf('president')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">President Faarooq Zameer has been unreachable for 72 hours. Official statement: "private retreat." No further details from the Presidential Office.</div></div>';
+  else if(q.indexOf('disappear')!==-1||q.indexOf('missing')!==-1||q.indexOf('abduct')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">No official missing person report has been filed. Media inquiries directed to government communications office. Several journalists have noted unusual MNDF activity near the harbor.</div></div>';
+  else if(q.indexOf('mndf')!==-1||q.indexOf('military')!==-1)r='<div class="note-card"><div style="font-size:13px;color:#94a3b8;line-height:1.7">Maldives National Defence Force. Responsible for national security and maritime operations. Recently increased patrols in the Malé harbor district.</div></div>';
+  else r='<div class="note-card"><div style="font-size:13px;color:#64748b;line-height:1.7">No relevant results found for "'+esc(el.value.trim())+'". Try searching for specific names, locations, or topics from your investigation.</div></div>';
+  S._browserResults=r;render();
+}
+
+// ═══ EPILOGUE GLITCH ═══
+function _runEpilogue(){
+  var el=$('chend-content');if(!el||S.scene!=='chend')return;
+  // Phase 1: Glitch existing content
+  el.style.animation='glitchText 0.15s ease infinite';
+  SFX.tension();
+  setTimeout(function(){
+    // Phase 2: Fade out
+    el.style.animation='fadeOut 1.5s ease forwards';
+    setTimeout(function(){
+      // Phase 3: Black screen + question
+      el.innerHTML='';el.style.animation='';el.style.opacity='1';
+      var q=document.createElement('div');
+      q.className='epilogue-line';
+      q.style.animationDelay='0.5s';
+      q.textContent='What are the three things that cannot be hidden?';
+      q.style.color='#64748b';q.style.fontSize='16px';q.style.fontFamily="'JetBrains Mono',monospace";q.style.letterSpacing='1px';
+      el.appendChild(q);
+      SFX.drama();
+      // Phase 4: Answers one by one
+      var answers=[{t:'The Sun',bold:false,delay:3500},{t:'The Moon',bold:false,delay:6000},{t:'The Truth',bold:true,delay:9000}];
+      answers.forEach(function(a){
+        setTimeout(function(){
+          var d=document.createElement('div');
+          d.className='epilogue-line'+(a.bold?' truth':'');
+          d.style.animationDelay='0s';
+          d.textContent=a.t;
+          if(!a.bold){d.style.color='#94a3b8';d.style.fontSize='22px'}
+          el.appendChild(d);
+          if(a.bold)SFX.success();else SFX.reveal();
+        },a.delay);
+      });
+    },1600);
+  },2000);
+}
+
+// ═══ EVIDENCE OVERLAY ═══
+function showEvOv(){
+  var h='<div style="text-align:left;width:100%;max-width:380px;max-height:70vh;overflow-y:auto;padding:0 8px">';
+  h+='<div class="jm" style="font-size:11px;letter-spacing:3px;color:#0ea5e9;margin-bottom:16px;text-align:center">EVIDENCE BOARD \u2014 '+S.ev.length+' ITEMS</div>';
+  if(!S.ev.length)h+='<div class="empty"><div class="ico">\ud83d\udd0d</div>No evidence yet.</div>';
+  else S.ev.forEach(function(e,i){h+='<div class="ev-item"><div class="ev-id">#'+(i+1)+' \u2014 '+esc(e.t)+'</div><div class="ev-desc">'+esc(e.d)+'</div></div>'});
+  h+='</div><button class="btn-primary" style="margin-top:20px" onclick="G.hideEvOv()">Close</button>';
+  var ov=$('ev-overlay');if(ov){ov.innerHTML=h;ov.classList.remove('hidden')}
+}
+function hideEvOv(){var ov=$('ev-overlay');if(ov)ov.classList.add('hidden')}
+
+// ═══ PUBLIC API ═══
+var G={startNew:startNew,continueGame:continueGame,doChoice:doChoice,pressPin:pressPin,checkPuzzle:checkPuzzle,useHint:useHint,checkHint:checkHint,navApp:navApp,openChat:openChat,switchPhone:switchPhone,render:render,showScene:showScene,hideOv:hideOv,adjustBr:adjustBr,endChapter:endChapter,goNextCh:goNextCh,toggleGrid:toggleGrid,startCh2:startCh2,startCh3:startCh3,startCh4:startCh4,startCh5:startCh5,startCh6:startCh6,startCh7:startCh7,showEvOv:showEvOv,hideEvOv:hideEvOv,browserSearch:browserSearch};
+window.G=G;
+window.S=S;
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded',function(){
+  $('tab-yours').addEventListener('click',function(){switchPhone('yours')});
+  $('tab-pres').addEventListener('click',function(){switchPhone('president')});
+  $('nav-home').addEventListener('click',function(){navApp('home')});
+  $('nav-chat').addEventListener('click',function(){navApp('messages')});
+  $('nav-ev').addEventListener('click',function(){navApp('evidence')});
+
+  S.fp=fingerprint();var loaded=load(S.fp);
+  setTimeout(function(){
+    var fpEl=$('title-fp');if(fpEl)fpEl.textContent='Device: '+S.fp.slice(0,16)+'...';
+    var box=$('title-btns');box.innerHTML='';
+    if(loaded&&S.step>0){
+      var cb=document.createElement('button');cb.className='btn-start';cb.textContent='CONTINUE INVESTIGATION';cb.addEventListener('click',continueGame);box.appendChild(cb);
+    }else{
+      var sb=document.createElement('button');sb.className='btn-start';sb.textContent='BEGIN INVESTIGATION';sb.addEventListener('click',startNew);box.appendChild(sb);
+    }
+    showScene('title');
+  },1200);
+});
+document.addEventListener('click',function(){try{var c=ac();if(c&&c.state==='suspended')c.resume()}catch(e){}},{once:true});
+})();
+
+</script>
+</body>
+</html>
